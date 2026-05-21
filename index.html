@@ -620,8 +620,8 @@ const articles = ARTICLES.filter(a => {
 
 // URLs Google Drive (liens directs)
 const PDF_URLS = {
-  2023: 'https://drive.google.com/uc?export=view&id=12Oi1SGe6raiLnN1gk-X8Q9WpKhhSHo14',
-  2024: 'https://drive.google.com/uc?export=view&id=1RQaeJtpv8Z682j--Nu6eP7_rfitkPh71'
+  2023: 'https://drive.google.com/uc?export=download&id=12Oi1SGe6raiLnN1gk-X8Q9WpKhhSHo14',
+  2024: 'https://drive.google.com/uc?export=download&id=1RQaeJtpv8Z682j--Nu6eP7_rfitkPh71'
 };
 
 let currentView = 'home';
@@ -726,70 +726,140 @@ function renderArticles(items, gridId, color) {
   });
 }
 
-function openPDF(bookYear, page) {
-  const url = PDF_URLS[bookYear];
-  const title = `ByteByteGo - ${bookYear === 2023 ? '2023' : '2024'} — Page ${page}`;
-  
-  const popup = window.open('', '_blank', 'width=950,height=750');
-  if (!popup) {
-    alert("⚠️ Popup bloqué. Veuillez autoriser les popups pour ce site.");
-    return;
-  }
-  
-  popup.document.title = title;
-  
-  popup.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>${title}</title>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>
-      <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Segoe UI', sans-serif; }
-        #spinner { color: #fff; font-size: 1.2rem; padding: 2rem; text-align: center; }
-        canvas { box-shadow: 0 4px 20px rgba(0,0,0,0.5); border-radius: 4px; max-width: 95%; }
-        #info { color: #ccc; font-size: 0.85rem; margin-top: 0.8rem; }
-        #error { color: #ef4444; font-size: 1rem; padding: 2rem; text-align: center; display: none; }
-      </style>
-    </head>
-    <body>
-      <div id="spinner">⏳ Chargement du PDF...</div>
-      <div id="error">❌ Erreur de chargement. Vérifiez que le fichier est bien public sur Google Drive.</div>
-      <canvas id="pdfCanvas"></canvas>
-      <div id="info"></div>
-      <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        
-        pdfjsLib.getDocument('${url}').promise.then(async function(pdf) {
-          document.getElementById('spinner').style.display = 'none';
-          
-          var pageNum = Math.min(${page}, pdf.numPages);
-          var page = await pdf.getPage(pageNum);
-          var canvas = document.getElementById('pdfCanvas');
-          var ctx = canvas.getContext('2d');
-          
-          var viewport = page.getViewport({scale: 1});
-          var scale = Math.min((window.innerWidth * 0.9) / viewport.width, (window.innerHeight * 0.85) / viewport.height);
-          var scaledViewport = page.getViewport({scale: scale});
-          
-          canvas.width = scaledViewport.width;
-          canvas.height = scaledViewport.height;
-          
-          await page.render({canvasContext: ctx, viewport: scaledViewport}).promise;
-          
-          document.getElementById('info').textContent = 'Page ' + pageNum + ' / ' + pdf.numPages;
-        }).catch(function(err) {
-          console.error(err);
-          document.getElementById('spinner').style.display = 'none';
-          document.getElementById('error').style.display = 'block';
-        });
-      <\/script>
-    </body>
-    </html>
-  `);
-  
+function openPDF(bookYear, targetPage) {
+  const rawUrl = PDF_URLS[bookYear];
+  const proxies = [
+    `https://corsproxy.io/?${encodeURIComponent(rawUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(rawUrl)}`,
+  ];
+  const title = `ByteByteGo ${bookYear} — Page ${targetPage}`;
+
+  const popup = window.open('', '_blank', 'width=1050,height=860');
+  if (!popup) { alert("⚠️ Popup bloqué. Autorisez les popups pour ce site."); return; }
+
+  popup.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${title}</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#1a1a2e; color:#e8eaf0; font-family:'Segoe UI',sans-serif; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+    #topbar { background:#0d0f14; border-bottom:1px solid #2a2f3f; padding:0.5rem 1rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-shrink:0; }
+    #topbar strong { font-size:0.85rem; }
+    #controls { display:flex; align-items:center; gap:0.6rem; }
+    button { background:#2a2f3f; border:1px solid #3a4050; color:#e8eaf0; padding:0.3rem 0.7rem; border-radius:5px; cursor:pointer; font-size:0.8rem; transition:background 0.15s; }
+    button:hover { background:#3a4050; }
+    button:disabled { opacity:0.3; cursor:default; }
+    #pageInfo { font-family:monospace; font-size:0.8rem; opacity:0.7; min-width:80px; text-align:center; }
+    #jumpInput { width:52px; background:#2a2f3f; border:1px solid #3a4050; color:#e8eaf0; padding:0.3rem 0.5rem; border-radius:5px; font-size:0.8rem; text-align:center; }
+    #status { flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:1rem; font-size:1rem; }
+    #spinner { font-size:2rem; animation:spin 1s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    #canvasWrap { flex:1; overflow:auto; display:flex; justify-content:center; align-items:flex-start; padding:1rem; }
+    canvas { box-shadow:0 4px 24px rgba(0,0,0,0.6); border-radius:4px; display:none; }
+    #errorMsg { color:#ef4444; display:none; text-align:center; padding:2rem; }
+  </style>
+</head>
+<body>
+  <div id="topbar">
+    <strong>${title}</strong>
+    <div id="controls">
+      <button id="btnFirst" onclick="goPage(1)">⏮</button>
+      <button id="btnPrev" onclick="goPage(currentPage-1)">◀</button>
+      <span id="pageInfo">…</span>
+      <button id="btnNext" onclick="goPage(currentPage+1)">▶</button>
+      <button id="btnLast" onclick="goPage(totalPages)">⏭</button>
+      <input id="jumpInput" type="number" min="1" placeholder="p." title="Aller à la page">
+      <button onclick="jumpTo()">Aller</button>
+    </div>
+  </div>
+  <div id="status">
+    <div id="spinner">⏳</div>
+    <div id="loadMsg">Chargement du PDF…</div>
+    <div id="errorMsg">❌ Impossible de charger le PDF via les proxies disponibles.</div>
+  </div>
+  <div id="canvasWrap"><canvas id="pdfCanvas"></canvas></div>
+
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const TARGET_PAGE = ${targetPage};
+    const PROXIES = ${JSON.stringify(proxies)};
+    let pdfDoc = null;
+    let currentPage = TARGET_PAGE;
+    let totalPages = 0;
+    let rendering = false;
+
+    async function tryLoad(proxyIndex) {
+      if (proxyIndex >= PROXIES.length) {
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('loadMsg').style.display = 'none';
+        document.getElementById('errorMsg').style.display = 'block';
+        return;
+      }
+      document.getElementById('loadMsg').textContent = 'Tentative ' + (proxyIndex+1) + '/' + PROXIES.length + '…';
+      try {
+        pdfDoc = await pdfjsLib.getDocument({ url: PROXIES[proxyIndex], cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/', cMapPacked: true }).promise;
+        totalPages = pdfDoc.numPages;
+        document.getElementById('status').style.display = 'none';
+        document.getElementById('pdfCanvas').style.display = 'block';
+        document.getElementById('jumpInput').max = totalPages;
+        goPage(Math.min(TARGET_PAGE, totalPages));
+      } catch(e) {
+        console.warn('Proxy ' + proxyIndex + ' failed:', e);
+        tryLoad(proxyIndex + 1);
+      }
+    }
+
+    async function renderPage(num) {
+      if (rendering) return;
+      rendering = true;
+      currentPage = num;
+      updateControls();
+      const page = await pdfDoc.getPage(num);
+      const canvas = document.getElementById('pdfCanvas');
+      const ctx = canvas.getContext('2d');
+      const vp0 = page.getViewport({scale:1});
+      const scale = Math.min((window.innerWidth * 0.88) / vp0.width, (window.innerHeight * 0.82) / vp0.height);
+      const vp = page.getViewport({scale});
+      canvas.width = vp.width;
+      canvas.height = vp.height;
+      await page.render({canvasContext: ctx, viewport: vp}).promise;
+      rendering = false;
+    }
+
+    function goPage(num) {
+      num = Math.max(1, Math.min(num, totalPages));
+      if (num === currentPage && pdfDoc) return;
+      renderPage(num);
+    }
+
+    function jumpTo() {
+      const v = parseInt(document.getElementById('jumpInput').value);
+      if (!isNaN(v)) goPage(v);
+    }
+
+    function updateControls() {
+      document.getElementById('pageInfo').textContent = currentPage + ' / ' + totalPages;
+      document.getElementById('btnPrev').disabled = currentPage <= 1;
+      document.getElementById('btnFirst').disabled = currentPage <= 1;
+      document.getElementById('btnNext').disabled = currentPage >= totalPages;
+      document.getElementById('btnLast').disabled = currentPage >= totalPages;
+    }
+
+    document.getElementById('jumpInput').addEventListener('keydown', e => { if(e.key==='Enter') jumpTo(); });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goPage(currentPage+1);
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goPage(currentPage-1);
+    });
+
+    tryLoad(0);
+  <\/script>
+</body>
+</html>`);
   popup.document.close();
 }
 
