@@ -62,10 +62,16 @@
   .empty{text-align:center;padding:4rem 2rem;color:var(--muted);font-size:0.85rem;}
   .copied{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:0.5rem 1rem;border-radius:6px;font-family:'Space Mono',monospace;font-size:0.75rem;opacity:0;pointer-events:none;transition:opacity 0.2s;z-index:99;}
   .copied.show{opacity:1;}
-  @media(max-width:600px){header{padding:1.5rem 1rem 1rem;}.tabs{padding:1rem 1rem 0;}.category-grid{padding:1rem;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}.articles-grid{grid-template-columns:1fr;}}
+  @media(max-width:600px){
+    header{padding:1.5rem 1rem 1rem;}
+    .tabs{padding:1rem 1rem 0;}
+    .category-grid{padding:1rem;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+    .articles-grid{grid-template-columns:1fr;}
+  }
 </style>
 </head>
 <body>
+
 <header>
   <div class="header-top">
     <div class="title-block">
@@ -79,29 +85,29 @@
   </div>
   <div class="search-bar">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input type="text" id="searchInput" placeholder="Rechercher un sujet..." autocomplete="off">
+    <input type="text" id="searchInput" placeholder="Rechercher un sujet ou un concept..." autocomplete="off">
   </div>
 </header>
 
 <div class="tabs" id="tabs">
-  <div class="tab active" data-view="home" onclick="showHome()">Accueil</div>
-  <div class="tab" data-view="all" onclick="showAll()">Tous <span class="count" id="allCount"></span></div>
-  <div class="tab" onclick="showCategory('api')">API</div>
-  <div class="tab" onclick="showCategory('db')">Bases de donnees</div>
-  <div class="tab" onclick="showCategory('net')">Reseau</div>
-  <div class="tab" onclick="showCategory('sec')">Securite</div>
-  <div class="tab" onclick="showCategory('cloud')">Cloud</div>
-  <div class="tab" onclick="showCategory('msg')">Messaging</div>
-  <div class="tab" onclick="showCategory('arch')">Architecture</div>
-  <div class="tab" onclick="showCategory('devops')">DevOps</div>
-  <div class="tab" onclick="showCategory('linux')">Linux</div>
-  <div class="tab" onclick="showCategory('dsa')">Algo</div>
-  <div class="tab" onclick="showCategory('cache')">Cache</div>
-  <div class="tab" onclick="showCategory('cases')">Case Studies</div>
-  <div class="tab" onclick="showCategory('pay')">Paiements</div>
-  <div class="tab" onclick="showCategory('ai')">AI</div>
-  <div class="tab" onclick="showCategory('git')">Git</div>
-  <div class="tab" onclick="showCategory('prog')">Programmation</div>
+  <div class="tab active" data-view="home" onclick="showHome()">🏠 Accueil</div>
+  <div class="tab" data-view="all" onclick="showAll()">📋 Tous <span class="count" id="allCount"></span></div>
+  <div class="tab" onclick="showCategory('api')">🔌 API</div>
+  <div class="tab" onclick="showCategory('db')">🗄️ Bases de donnees</div>
+  <div class="tab" onclick="showCategory('net')">🌐 Reseau</div>
+  <div class="tab" onclick="showCategory('sec')">🔐 Securite</div>
+  <div class="tab" onclick="showCategory('cloud')">☁️ Cloud</div>
+  <div class="tab" onclick="showCategory('msg')">📨 Messaging</div>
+  <div class="tab" onclick="showCategory('arch')">🏗️ Architecture</div>
+  <div class="tab" onclick="showCategory('devops')">⚙️ DevOps</div>
+  <div class="tab" onclick="showCategory('linux')">🐧 Linux</div>
+  <div class="tab" onclick="showCategory('dsa')">📊 Algo</div>
+  <div class="tab" onclick="showCategory('cache')">💾 Cache</div>
+  <div class="tab" onclick="showCategory('cases')">🏢 Case Studies</div>
+  <div class="tab" onclick="showCategory('pay')">💳 Paiements</div>
+  <div class="tab" onclick="showCategory('ai')">🤖 AI & LLMs</div>
+  <div class="tab" onclick="showCategory('git')">🔀 Git</div>
+  <div class="tab" onclick="showCategory('prog')">💻 Programmation</div>
 </div>
 
 <div class="category-grid" id="homeView"></div>
@@ -109,15 +115,15 @@
 <div class="articles-section" id="articlesSection">
   <div class="section-header">
     <div class="section-title"><div class="dot" id="sectionDot"></div><span id="sectionTitle"></span></div>
-    <button class="back-btn" onclick="showHome()">Retour</button>
+    <button class="back-btn" onclick="showHome()">← Retour</button>
   </div>
   <div class="articles-grid" id="articlesGrid"></div>
 </div>
 
 <div class="all-articles" id="allArticles">
   <div class="all-header">
-    <div class="all-title">Tous les chapitres</div>
-    <button class="back-btn" onclick="showHome()">Retour</button>
+    <div class="all-title">Tous les chapitres fusionnes</div>
+    <button class="back-btn" onclick="showHome()">← Retour</button>
   </div>
   <div class="articles-grid" id="allGrid"></div>
 </div>
@@ -131,22 +137,22 @@
 
 <script>
 var CATEGORIES = {
-  api:   {label:'API & Protocoles',      icon:'API',  color:'#3b82f6'},
-  db:    {label:'Bases de donnees',       icon:'DB',   color:'#10b981'},
-  net:   {label:'Reseau & Internet',      icon:'NET',  color:'#06b6d4'},
-  sec:   {label:'Securite & Auth',        icon:'SEC',  color:'#ef4444'},
-  cloud: {label:'Cloud & Infrastructure', icon:'CLD',  color:'#8b5cf6'},
-  msg:   {label:'Messaging & Streaming',  icon:'MSG',  color:'#f59e0b'},
-  arch:  {label:'Architecture & Patterns',icon:'ARCH', color:'#ec4899'},
-  devops:{label:'DevOps & CI/CD',         icon:'OPS',  color:'#f97316'},
-  linux: {label:'Linux & Systemes',       icon:'LNX',  color:'#84cc16'},
-  dsa:   {label:'Algo & Data Structures', icon:'DSA',  color:'#a78bfa'},
-  cache: {label:'Caching',                icon:'CCH',  color:'#22d3ee'},
-  cases: {label:'Case Studies',           icon:'CSE',  color:'#fb7185'},
-  pay:   {label:'Paiements',              icon:'PAY',  color:'#fbbf24'},
-  ai:    {label:'AI & LLMs',              icon:'AI',   color:'#c084fc'},
-  git:   {label:'Git & Versioning',       icon:'GIT',  color:'#34d399'},
-  prog:  {label:'Prog & Langages',        icon:'PRG',  color:'#60a5fa'}
+  api:   {label:'API & Protocoles',       icon:'🔌', color:'#3b82f6'},
+  db:    {label:'Bases de donnees',        icon:'🗄️', color:'#10b981'},
+  net:   {label:'Reseau & Internet',       icon:'🌐', color:'#06b6d4'},
+  sec:   {label:'Securite & Auth',         icon:'🔐', color:'#ef4444'},
+  cloud: {label:'Cloud & Infrastructure',  icon:'☁️', color:'#8b5cf6'},
+  msg:   {label:'Messaging & Streaming',   icon:'📨', color:'#f59e0b'},
+  arch:  {label:'Architecture & Patterns', icon:'🏗️', color:'#ec4899'},
+  devops:{label:'DevOps & CI/CD',          icon:'⚙️', color:'#f97316'},
+  linux: {label:'Linux & Systemes',        icon:'🐧', color:'#84cc16'},
+  dsa:   {label:'Algo & Data Structures',  icon:'📊', color:'#a78bfa'},
+  cache: {label:'Caching',                 icon:'💾', color:'#22d3ee'},
+  cases: {label:'Case Studies',            icon:'🏢', color:'#fb7185'},
+  pay:   {label:'Paiements',               icon:'💳', color:'#fbbf24'},
+  ai:    {label:'AI & LLMs',               icon:'🤖', color:'#c084fc'},
+  git:   {label:'Git & Versioning',        icon:'🔀', color:'#34d399'},
+  prog:  {label:'Prog & Langages',         icon:'💻', color:'#60a5fa'}
 };
 
 var ARTICLES = [
@@ -192,7 +198,7 @@ var ARTICLES = [
   {title:"How is data transmitted between applications?",page:236,cat:'net',book:2023},
   {title:"How to scale a website to support millions of users?",page:265,cat:'net',book:2023},
   {title:"Top 6 most commonly used Server Types",page:259,cat:'net',book:2023},
-  {title:"What happens when you type 'ssh hostname'?",page:327,cat:'net',book:2023},
+  {title:"What happens when you type ssh hostname?",page:327,cat:'net',book:2023},
   {title:"OAuth 2.0 Explained With Simple Terms",page:28,cat:'sec',book:2023},
   {title:"HTTPS, SSL Handshake, and Data Encryption Explained",page:75,cat:'sec',book:2023},
   {title:"Symmetric encryption vs asymmetric encryption",page:133,cat:'sec',book:2023},
@@ -359,36 +365,39 @@ var articles = ARTICLES.filter(function(a){
   seen.add(key);return true;
 });
 
-var PDF_IDS = {
-  2023:'12Oi1SGe6raiLnN1gk-X8Q9WpKhhSHo14',
-  2024:'1RQaeJtpv8Z682j--Nu6eP7_rfitkPh71'
+// URLs Dropbox directes (CORS autorise)
+var PDF_URLS = {
+  2023: 'https://dl.dropboxusercontent.com/scl/fi/bs7nxs2abxe5po90g6gyn/livre_2023.pdf.pdf?rlkey=qd00ije7ijhg78c7lrt90mhcc&dl=1',
+  2024: 'https://dl.dropboxusercontent.com/scl/fi/yzuxtdpifyynyu4y5nto1/livre_2024.pdf.pdf?rlkey=tdhrvonhm6qjass70yond2ksz&dl=1'
 };
 
 var currentView='home', currentCat=null;
 
 function init(){
-  document.getElementById('totalArticles').textContent=articles.length;
-  document.getElementById('allCount').textContent='('+articles.length+')';
-  buildHomeView();showHome();
+  document.getElementById('totalArticles').textContent = articles.length;
+  document.getElementById('allCount').textContent = '('+articles.length+')';
+  buildHomeView();
+  showHome();
 }
 
 function buildHomeView(){
-  var grid=document.getElementById('homeView');grid.innerHTML='';
+  var grid = document.getElementById('homeView');
+  grid.innerHTML = '';
   Object.keys(CATEGORIES).forEach(function(key){
-    var cat=CATEGORIES[key];
-    var count=articles.filter(function(a){return a.cat===key;}).length;
-    if(!count)return;
-    var card=document.createElement('div');
-    card.className='cat-card';
-    card.style.borderTop='3px solid '+cat.color;
-    card.innerHTML='<div class="cat-name">'+cat.label+'</div><div class="cat-count">'+count+' article'+(count>1?'s':'')+'</div>';
-    card.addEventListener('click',function(){showCategory(key);});
+    var cat = CATEGORIES[key];
+    var count = articles.filter(function(a){return a.cat===key;}).length;
+    if(!count) return;
+    var card = document.createElement('div');
+    card.className = 'cat-card';
+    card.style.borderTop = '3px solid '+cat.color;
+    card.innerHTML = '<div class="cat-icon">'+cat.icon+'</div><div class="cat-name">'+cat.label+'</div><div class="cat-count">'+count+' article'+(count>1?'s':'')+'</div>';
+    card.addEventListener('click', function(){showCategory(key);});
     grid.appendChild(card);
   });
 }
 
 function showHome(){
-  currentView='home';currentCat=null;
+  currentView='home'; currentCat=null;
   document.getElementById('homeView').style.display='grid';
   document.getElementById('articlesSection').classList.remove('visible');
   document.getElementById('allArticles').classList.remove('visible');
@@ -398,21 +407,21 @@ function showHome(){
 }
 
 function showCategory(catKey){
-  currentView='cat';currentCat=catKey;
-  var cat=CATEGORIES[catKey];
-  var items=articles.filter(function(a){return a.cat===catKey;});
+  currentView='cat'; currentCat=catKey;
+  var cat = CATEGORIES[catKey];
+  var items = articles.filter(function(a){return a.cat===catKey;});
   document.getElementById('homeView').style.display='none';
   document.getElementById('allArticles').classList.remove('visible');
   document.getElementById('searchResults').classList.remove('visible');
-  document.getElementById('sectionDot').style.background=cat.color;
-  document.getElementById('sectionTitle').textContent=cat.label+' ('+items.length+')';
+  document.getElementById('sectionDot').style.background = cat.color;
+  document.getElementById('sectionTitle').textContent = cat.icon+' '+cat.label+' ('+items.length+')';
   renderArticles(items,'articlesGrid',cat.color);
   document.getElementById('articlesSection').classList.add('visible');
   setActiveTab(catKey);
 }
 
 function showAll(){
-  currentView='all';currentCat=null;
+  currentView='all'; currentCat=null;
   document.getElementById('homeView').style.display='none';
   document.getElementById('articlesSection').classList.remove('visible');
   document.getElementById('searchResults').classList.remove('visible');
@@ -421,103 +430,94 @@ function showAll(){
   setActiveTab('all');
 }
 
-function renderArticles(items,gridId,color){
-  var grid=document.getElementById(gridId);grid.innerHTML='';
+function renderArticles(items, gridId, color){
+  var grid = document.getElementById(gridId);
+  grid.innerHTML = '';
   if(!items.length){grid.innerHTML='<div class="empty">Aucun resultat</div>';return;}
-  var sorted=items.slice().sort(function(a,b){return a.book-b.book||a.page-b.page;});
+  var sorted = items.slice().sort(function(a,b){return a.book-b.book||a.page-b.page;});
   sorted.forEach(function(article){
-    var cat=CATEGORIES[article.cat];
-    var c=cat?cat.color:color;
-    var card=document.createElement('div');
-    card.className='article-card';
-    card.style.setProperty('--hover-color',c);
-    card.innerHTML='<div class="article-content"><div class="article-title">'+article.title+'</div>'
+    var cat = CATEGORIES[article.cat];
+    var c = cat ? cat.color : color;
+    var card = document.createElement('div');
+    card.className = 'article-card';
+    card.style.setProperty('--hover-color', c);
+    card.innerHTML = '<div class="article-content"><div class="article-title">'+article.title+'</div>'
       +'<div class="badges-container"><span class="book-badge '+(article.book===2023?'b2023':'b2024')+'">Livre '+article.book+'</span></div></div>'
       +'<div class="page-badge" style="background:'+c+'">p.'+article.page+'</div>';
-    card.addEventListener('click',function(){openPDF(article.book,article.page);});
+    card.addEventListener('click', function(){openPDF(article.book, article.page);});
     grid.appendChild(card);
   });
 }
 
-function openPDF(bookYear,targetPage){
-  var fileId=PDF_IDS[bookYear];
-  var rawUrl='https://drive.google.com/uc?export=download&id='+fileId;
-  var proxies=[
-    'https://corsproxy.io/?'+encodeURIComponent(rawUrl),
-    'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(rawUrl),
-    'https://api.allorigins.win/raw?url='+encodeURIComponent(rawUrl)
-  ];
-  var fallbackUrl='https://drive.google.com/file/d/'+fileId+'/view';
+function openPDF(bookYear, targetPage){
+  var pdfUrl = PDF_URLS[bookYear];
 
-  var popup=window.open('','_blank','width=1050,height=860');
+  var popup = window.open('','_blank','width=1050,height=860');
   if(!popup){alert('Popup bloque. Autorisez les popups pour ce site.');return;}
 
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8">'
-    +'<title>ByteByteGo '+bookYear+' p.'+targetPage+'</title>'
+  popup.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    +'<title>ByteByteGo '+bookYear+' - p.'+targetPage+'</title>'
     +'<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>'
     +'<style>'
     +'*{margin:0;padding:0;box-sizing:border-box;}'
     +'body{background:#1a1a2e;color:#e8eaf0;font-family:Segoe UI,sans-serif;display:flex;flex-direction:column;height:100vh;overflow:hidden;}'
-    +'#bar{background:#0d0f14;border-bottom:1px solid #2a2f3f;padding:.5rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-shrink:0;}'
+    +'#bar{background:#0d0f14;border-bottom:1px solid #2a2f3f;padding:.6rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-shrink:0;}'
     +'#bar strong{font-size:.85rem;}'
     +'#ctrl{display:flex;align-items:center;gap:.5rem;}'
-    +'button{background:#2a2f3f;border:1px solid #3a4050;color:#e8eaf0;padding:.3rem .7rem;border-radius:5px;cursor:pointer;font-size:.8rem;}'
+    +'button{background:#2a2f3f;border:1px solid #3a4050;color:#e8eaf0;padding:.3rem .75rem;border-radius:5px;cursor:pointer;font-size:.82rem;transition:background .15s;}'
     +'button:hover{background:#3a4050;}'
     +'button:disabled{opacity:.3;cursor:default;}'
-    +'#pi{font-family:monospace;font-size:.8rem;opacity:.7;min-width:80px;text-align:center;}'
-    +'#ji{width:52px;background:#2a2f3f;border:1px solid #3a4050;color:#e8eaf0;padding:.3rem .5rem;border-radius:5px;font-size:.8rem;text-align:center;}'
-    +'#st{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;}'
+    +'#pi{font-family:monospace;font-size:.8rem;opacity:.7;min-width:90px;text-align:center;}'
+    +'#ji{width:55px;background:#2a2f3f;border:1px solid #3a4050;color:#e8eaf0;padding:.3rem .5rem;border-radius:5px;font-size:.8rem;text-align:center;}'
+    +'#st{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;font-size:1rem;}'
     +'#sp{font-size:2.5rem;animation:spin 1s linear infinite;}'
     +'@keyframes spin{to{transform:rotate(360deg);}}'
     +'#cw{flex:1;overflow:auto;display:none;justify-content:center;align-items:flex-start;padding:1rem;}'
     +'canvas{box-shadow:0 4px 24px rgba(0,0,0,.6);border-radius:4px;}'
-    +'#em{color:#ef4444;display:none;text-align:center;padding:2rem;line-height:1.8;}'
-    +'#em a{color:#60a5fa;}'
+    +'#em{color:#ef4444;display:none;text-align:center;padding:2rem;line-height:1.8;font-size:.9rem;}'
     +'</style></head><body>'
-    +'<div id="bar"><strong>ByteByteGo '+bookYear+' - Page '+targetPage+'</strong>'
+    +'<div id="bar">'
+    +'<strong>ByteByteGo '+bookYear+' &mdash; Page '+targetPage+'</strong>'
     +'<div id="ctrl">'
-    +'<button id="b1" onclick="goPage(1)" disabled>|&lt;</button>'
-    +'<button id="b2" onclick="goPage(cp-1)" disabled>&lt;</button>'
-    +'<span id="pi">...</span>'
-    +'<button id="b3" onclick="goPage(cp+1)" disabled>&gt;</button>'
-    +'<button id="b4" onclick="goPage(tp)" disabled>&gt;|</button>'
+    +'<button id="b1" onclick="goPage(1)" disabled>|&#8592;</button>'
+    +'<button id="b2" onclick="goPage(cp-1)" disabled>&#8592;</button>'
+    +'<span id="pi">chargement...</span>'
+    +'<button id="b3" onclick="goPage(cp+1)" disabled>&#8594;</button>'
+    +'<button id="b4" onclick="goPage(tp)" disabled>&#8594;|</button>'
     +'<input id="ji" type="number" min="1" placeholder="p.">'
     +'<button onclick="jump()">Aller</button>'
     +'</div></div>'
-    +'<div id="st"><span id="sp">&#8987;</span><span id="lm">Chargement...</span><div id="em"></div></div>'
+    +'<div id="st"><span id="sp">&#8987;</span><span id="lm">Chargement du PDF...</span><div id="em"></div></div>'
     +'<div id="cw"><canvas id="cv"></canvas></div>'
     +'<script>'
     +'pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";'
-    +'var T='+targetPage+',PROX='+JSON.stringify(proxies)+',FB="'+fallbackUrl+'";'
+    +'var URL_PDF="'+pdfUrl+'", T='+targetPage+';'
     +'var doc=null,cp=T,tp=0,rnd=false;'
-    +'async function load(i){'
-    +'  if(i>=PROX.length){'
-    +'    document.getElementById("sp").style.display="none";'
-    +'    document.getElementById("lm").style.display="none";'
-    +'    document.getElementById("em").style.display="block";'
-    +'    document.getElementById("em").innerHTML="Impossible de charger via proxy.<br><a href=\\""+FB+"\\" target=\\"_blank\\">Ouvrir dans Google Drive</a> et aller manuellement a la page '+targetPage+'.";'
-    +'    return;'
-    +'  }'
-    +'  document.getElementById("lm").textContent="Tentative "+(i+1)+"/"+PROX.length+"...";'
-    +'  try{'
-    +'    doc=await pdfjsLib.getDocument({url:PROX[i],cMapUrl:"https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/",cMapPacked:true}).promise;'
-    +'    tp=doc.numPages;'
-    +'    document.getElementById("st").style.display="none";'
-    +'    document.getElementById("cw").style.display="flex";'
-    +'    document.getElementById("ji").max=tp;'
-    +'    goPage(Math.min(T,tp));'
-    +'  }catch(e){console.warn("proxy "+i+" fail",e);load(i+1);}'
-    +'}'
+    +'pdfjsLib.getDocument({url:URL_PDF,cMapUrl:"https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/",cMapPacked:true}).promise'
+    +'.then(function(d){'
+    +'  doc=d; tp=d.numPages;'
+    +'  document.getElementById("st").style.display="none";'
+    +'  document.getElementById("cw").style.display="flex";'
+    +'  document.getElementById("ji").max=tp;'
+    +'  goPage(Math.min(T,tp));'
+    +'})'
+    +'.catch(function(e){'
+    +'  console.error(e);'
+    +'  document.getElementById("sp").style.display="none";'
+    +'  document.getElementById("lm").style.display="none";'
+    +'  document.getElementById("em").style.display="block";'
+    +'  document.getElementById("em").textContent="Erreur de chargement: "+e.message;'
+    +'});'
     +'async function render(n){'
-    +'  if(rnd)return;rnd=true;cp=n;upd();'
-    +'  var p=await doc.getPage(n);'
+    +'  if(rnd)return; rnd=true; cp=n; upd();'
+    +'  var page=await doc.getPage(n);'
     +'  var cv=document.getElementById("cv");'
     +'  var ctx=cv.getContext("2d");'
-    +'  var v0=p.getViewport({scale:1});'
-    +'  var sc=Math.min(window.innerWidth*.9/v0.width,window.innerHeight*.85/v0.height);'
-    +'  var vp=p.getViewport({scale:sc});'
-    +'  cv.width=vp.width;cv.height=vp.height;'
-    +'  await p.render({canvasContext:ctx,viewport:vp}).promise;'
+    +'  var vp0=page.getViewport({scale:1});'
+    +'  var sc=Math.min(window.innerWidth*.9/vp0.width,window.innerHeight*.85/vp0.height);'
+    +'  var vp=page.getViewport({scale:sc});'
+    +'  cv.width=vp.width; cv.height=vp.height;'
+    +'  await page.render({canvasContext:ctx,viewport:vp}).promise;'
     +'  rnd=false;'
     +'}'
     +'function goPage(n){n=Math.max(1,Math.min(n,tp));if(n===cp&&doc&&document.getElementById("cw").style.display!=="none")return;render(n);}'
@@ -534,16 +534,13 @@ function openPDF(bookYear,targetPage){
     +'  if(e.key==="ArrowRight"||e.key==="ArrowDown")goPage(cp+1);'
     +'  if(e.key==="ArrowLeft"||e.key==="ArrowUp")goPage(cp-1);'
     +'});'
-    +'load(0);'
-    +'<\/script></body></html>';
-
-  popup.document.write(html);
+    +'<\/script></body></html>');
   popup.document.close();
 
-  var msg=document.getElementById('copiedMsg');
-  msg.textContent='Ouverture p.'+targetPage+' (livre '+bookYear+')...';
+  var msg = document.getElementById('copiedMsg');
+  msg.textContent = 'Ouverture p.'+targetPage+' (livre '+bookYear+')...';
   msg.classList.add('show');
-  setTimeout(function(){msg.classList.remove('show');},2000);
+  setTimeout(function(){msg.classList.remove('show');}, 2000);
 }
 
 function setActiveTab(id){
@@ -553,25 +550,25 @@ function setActiveTab(id){
   });
 }
 
-document.getElementById('searchInput').addEventListener('input',function(){
-  var q=this.value.trim().toLowerCase();
+document.getElementById('searchInput').addEventListener('input', function(){
+  var q = this.value.trim().toLowerCase();
   if(!q){
     document.getElementById('searchResults').classList.remove('visible');
-    if(currentView==='home')document.getElementById('homeView').style.display='grid';
-    if(currentView==='cat')document.getElementById('articlesSection').classList.add('visible');
-    if(currentView==='all')document.getElementById('allArticles').classList.add('visible');
+    if(currentView==='home') document.getElementById('homeView').style.display='grid';
+    if(currentView==='cat') document.getElementById('articlesSection').classList.add('visible');
+    if(currentView==='all') document.getElementById('allArticles').classList.add('visible');
     return;
   }
   document.getElementById('homeView').style.display='none';
   document.getElementById('articlesSection').classList.remove('visible');
   document.getElementById('allArticles').classList.remove('visible');
-  var results=articles.filter(function(a){return a.title.toLowerCase().indexOf(q)!==-1;});
-  document.getElementById('resultsLabel').textContent=results.length+' resultat'+(results.length!==1?'s':'')+' pour "'+this.value.trim()+'"';
+  var results = articles.filter(function(a){return a.title.toLowerCase().indexOf(q)!==-1;});
+  document.getElementById('resultsLabel').textContent = results.length+' resultat'+(results.length!==1?'s':'')+' pour "'+this.value.trim()+'"';
   renderArticles(results,'searchGrid','#6b7280');
   document.getElementById('searchResults').classList.add('visible');
 });
 
-window.addEventListener('DOMContentLoaded',init);
+window.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
