@@ -802,45 +802,15 @@ function renderArticles(items, gridId, color) {
 }
 
 // ---- Nouvelle fonction pour ouvrir le PDF à la bonne page via PDF.js ----
-async function openPdfAtPage(bookYear, page) {
-  const filename = bookYear === 2023 ? 'livre_2023.pdf' : 'livre_2024.pdf';
-  const url = filename; // même dossier
+function openPDF(bookYear, page) {
+  // Tes URLs Dropbox (garde celles que tu avais déjà)
+  const url = bookYear === 2023 
+    ? 'https://dl.dropboxusercontent.com/s/xxx/livre_2023.pdf'
+    : 'https://dl.dropboxusercontent.com/s/yyy/livre_2024.pdf';
 
-  // Afficher la modale
-  const modal = document.getElementById('pdfModal');
-  modal.classList.add('active');
-
-  // Message de chargement
-  const msg = document.getElementById('copiedMsg');
-  msg.textContent = `⚡ Chargement de ${filename} (Page ${page})...`;
-  msg.classList.add('show');
-  setTimeout(() => msg.classList.remove('show'), 1500);
-
-  try {
-    // Configuration du worker PDF.js (CDN)
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    
-    // Charger le document
-    const loadingTask = pdfjsLib.getDocument(url);
-    currentPdfDoc = await loadingTask.promise;
-    
-    // Aller à la page demandée (les pages commencent à 1 dans PDF.js)
-    const pageNum = Math.min(page, currentPdfDoc.numPages);
-    await renderPdfPage(pageNum);
-    
-    // Mettre à jour l'info
-    document.getElementById('pdfPageInfo').textContent = `Page ${pageNum} / ${currentPdfDoc.numPages}`;
-    currentPdfPage = pageNum;
-    
-    msg.textContent = `✅ Affichage de la page ${pageNum}`;
-    msg.classList.add('show');
-    setTimeout(() => msg.classList.remove('show'), 1500);
-    
-  } catch (error) {
-    console.error('Erreur PDF:', error);
-    alert('Impossible de charger le PDF. Vérifiez que les fichiers livre_2023.pdf et livre_2024.pdf sont bien présents.');
-    closePdf();
-  }
+  // Ouvre dans un nouvel onglet ET passe la page en paramètre d'URL
+  const viewerUrl = 'pdf-viewer.html?file=' + encodeURIComponent(url) + '&page=' + page;
+  window.open(viewerUrl, '_blank');
 }
 
 async function renderPdfPage(pageNum) {
