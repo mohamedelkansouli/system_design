@@ -802,8 +802,15 @@ function renderArticles(items, gridId, color) {
 }
 
 function openPDF(bookYear, page) {
-  const filename = bookYear === 2023 ? 'livre_2023.pdf' : 'livre_2024.pdf';
-  const targetUrl = `${filename}#page=${page}`;
+  // Vos deux liens Dropbox exacts
+  const link2023 = "https://www.dropbox.com/scl/fi/bs7nxs2abxe5po90g6gyn/livre_2023.pdf.pdf?rlkey=qd00ije7ijhg78c7lrt90mhcc&st=oi0jf7cw&dl=1";
+  const link2024 = "https://www.dropbox.com/scl/fi/yzuxtdpifyynyu4y5nto1/livre_2024.pdf.pdf?rlkey=tdhrvonhm6qjass70yond2ksz&st=4cw3lh0o&dl=1";
+
+  // Sélection du bon lien selon l'année du livre
+  const baseDropboxUrl = bookYear === 2023 ? link2023 : link2024;
+  
+  // Ajout du paramètre pour cibler la bonne page du PDF
+  const targetUrl = `${baseDropboxUrl}#page=${page}`;
   
   const msg = document.getElementById('copiedMsg');
   msg.textContent = `🚀 Ouverture de l'édition ${bookYear} à la page ${page}...`;
