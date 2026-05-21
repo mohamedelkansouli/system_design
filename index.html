@@ -1,221 +1,387 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ByteByteGo — Archive System Design (2023 - 2024)</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #0d0f14;
-      --surface: #161920;
-      --surface2: #1e2230;
-      --border: #2a2f3f;
-      --text: #e8eaf0;
-      --muted: #6b7280;
-      --accent: #f0f4ff;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ByteByteGo — Archive System Design (2023 - 2024)</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<!-- Librairie PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  /* --- Mêmes styles que votre code original --- */
+  :root {
+    --bg: #0d0f14;
+    --surface: #161920;
+    --surface2: #1e2230;
+    --border: #2a2f3f;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --accent: #f0f4ff;
+    --api:     #3b82f6;
+    --db:      #10b981;
+    --net:     #06b6d4;
+    --sec:     #ef4444;
+    --cloud:   #8b5cf6;
+    --msg:     #f59e0b;
+    --arch:    #ec4899;
+    --devops:  #f97316;
+    --linux:   #84cc16;
+    --dsa:     #a78bfa;
+    --cache:   #22d3ee;
+    --cases:   #fb7185;
+    --pay:     #fbbf24;
+    --ai:      #c084fc;
+    --git:     #34d399;
+    --prog:    #60a5fa;
+  }
 
-      --api:     #3b82f6;
-      --db:      #10b981;
-      --net:     #06b6d4;
-      --sec:     #ef4444;
-      --cloud:   #8b5cf6;
-      --msg:     #f59e0b;
-      --arch:    #ec4899;
-      --devops:  #f97316;
-      --linux:   #84cc16;
-      --dsa:     #a78bfa;
-      --cache:   #22d3ee;
-      --cases:   #fb7185;
-      --pay:     #fbbf24;
-      --ai:      #c084fc;
-      --git:     #34d399;
-      --prog:    #60a5fa;
-    }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
 
-    body {
-      font-family: 'Syne', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
+  header {
+    padding: 2.5rem 2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
 
-    header {
-      padding: 2.5rem 2rem 1.5rem;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 1.2rem;
-    }
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
 
-    .header-top {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
+  .title-block h1 {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
 
-    .title-block h1 {
-      font-size: clamp(1.4rem, 3vw, 2rem);
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      line-height: 1.1;
-    }
+  .title-block h1 span {
+    color: var(--ai);
+  }
 
-    .title-block h1 span { color: var(--ai); }
+  .title-block p {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 0.4rem;
+    letter-spacing: 0.05em;
+  }
 
-    .title-block p {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.72rem;
-      color: var(--muted);
-      margin-top: 0.4rem;
-      letter-spacing: 0.05em;
-    }
+  .stats {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
 
-    .stats { display: flex; gap: 1.5rem; flex-wrap: wrap; }
-    .stat { text-align: right; }
-    .stat .num {
-      font-family: 'Space Mono', monospace;
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: var(--accent);
-    }
-    .stat .label {
-      font-size: 0.68rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
+  .stat {
+    text-align: right;
+  }
 
-    .search-bar { position: relative; }
-    .search-bar input {
-      width: 100%;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.75rem 1rem 0.75rem 2.8rem;
-      font-family: 'Syne', sans-serif;
-      font-size: 0.9rem;
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .search-bar input::placeholder { color: var(--muted); }
-    .search-bar input:focus { border-color: var(--ai); }
-    .search-bar svg {
-      position: absolute; left: 0.9rem; top: 50%;
-      transform: translateY(-50%); color: var(--muted); pointer-events: none;
-    }
+  .stat .num {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
 
-    .tabs {
-      padding: 1.2rem 2rem 0;
-      display: flex; gap: 0.5rem;
-      overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap;
-    }
-    .tabs::-webkit-scrollbar { display: none; }
+  .stat .label {
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
 
-    .tab {
-      flex-shrink: 0; padding: 0.45rem 0.9rem; border-radius: 6px;
-      border: 1px solid var(--border); background: var(--surface);
-      font-size: 0.78rem; font-weight: 600; cursor: pointer;
-      transition: all 0.15s; white-space: nowrap; color: var(--muted);
-      display: flex; align-items: center; gap: 0.4rem;
-    }
-    .tab:hover { border-color: var(--text); color: var(--text); }
-    .tab.active { color: #000; border-color: transparent; }
-    .tab .count { font-family: 'Space Mono', monospace; font-size: 0.65rem; opacity: 0.7; }
+  .search-bar {
+    position: relative;
+  }
 
-    .category-grid {
-      padding: 1.5rem 2rem;
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;
-    }
+  .search-bar input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem 0.75rem 2.8rem;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
 
-    .cat-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-      padding: 1.2rem 1.1rem; cursor: pointer; transition: all 0.15s;
-      position: relative; overflow: hidden;
-    }
-    .cat-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0;
-      height: 3px; border-radius: 12px 12px 0 0;
-    }
-    .cat-card:hover {
-      background: var(--surface2); transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    }
-    .cat-icon { font-size: 1.6rem; margin-bottom: 0.6rem; }
-    .cat-name { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.25rem; }
-    .cat-count { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--muted); }
+  .search-bar input::placeholder { color: var(--muted); }
+  .search-bar input:focus { border-color: var(--ai); }
 
-    .articles-section, .all-articles, .search-results { padding: 0 2rem 2rem; display: none; }
-    .articles-section.visible, .all-articles.visible, .search-results.visible { display: block; }
+  .search-bar svg {
+    position: absolute;
+    left: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+  }
 
-    .section-header, .all-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 1.2rem; padding-top: 0.5rem;
-    }
-    .section-title, .all-title { display: flex; align-items: center; gap: 0.7rem; font-size: 1rem; font-weight: 700; }
-    .section-title .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .tabs {
+    padding: 1.2rem 2rem 0;
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+  }
 
-    .back-btn {
-      font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--muted);
-      cursor: pointer; background: none; border: 1px solid var(--border);
-      padding: 0.35rem 0.7rem; border-radius: 5px; transition: all 0.15s;
-    }
-    .back-btn:hover { color: var(--text); border-color: var(--text); }
+  .tabs::-webkit-scrollbar { display: none; }
 
-    .articles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 0.8rem; }
-    .article-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-      padding: 1rem 1.1rem; cursor: pointer; transition: all 0.15s;
-      display: flex; align-items: flex-start; justify-content: space-between; gap: 0.8rem;
-    }
-    .article-card:hover { background: var(--surface2); border-color: var(--hover-color); transform: translateX(3px); }
-    .article-content { flex: 1; display: flex; flex-direction: column; gap: 0.4rem; }
-    .article-title { font-size: 0.84rem; font-weight: 600; line-height: 1.4; }
-    
-    .badges-container { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-    .book-badge {
-      font-family: 'Space Mono', monospace; font-size: 0.6rem;
-      padding: 0.1rem 0.4rem; border-radius: 3px; font-weight: bold;
-    }
-    .book-badge.b2023 { background: #2e384d; color: #60a5fa; border: 1px solid #3b82f644; }
-    .book-badge.b2024 { background: #4c2d54; color: #f472b6; border: 1px solid #ec489944; }
+  .tab {
+    flex-shrink: 0;
+    padding: 0.45rem 0.9rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
 
-    .page-badge {
-      font-family: 'Space Mono', monospace; font-size: 0.68rem; color: #000;
-      padding: 0.2rem 0.5rem; border-radius: 4px; flex-shrink: 0; font-weight: 700;
-    }
+  .tab:hover { border-color: var(--text); color: var(--text); }
+  .tab.active { color: #000; border-color: transparent; }
 
-    .results-label { font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--muted); padding: 0.5rem 0 1rem; }
-    .empty { text-align: center; padding: 4rem 2rem; color: var(--muted); font-size: 0.85rem; }
+  .tab .count {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    opacity: 0.7;
+  }
 
-    .copied {
-      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
-      background: var(--text); color: var(--bg); padding: 0.5rem 1rem; border-radius: 6px;
-      font-family: 'Space Mono', monospace; font-size: 0.75rem; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 99;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    }
-    .copied.show { opacity: 1; transform: translateX(-50%) translateY(-10px); }
+  .category-grid {
+    padding: 1.5rem 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
 
-    @media (max-width: 600px) {
-      header { padding: 1.5rem 1rem 1rem; }
-      .tabs { padding: 1rem 1rem 0; }
-      .category-grid { padding: 1rem; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-      .articles-grid { grid-template-columns: 1fr; }
-    }
-  </style>
+  .cat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem 1.1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .cat-card:hover {
+    background: var(--surface2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+
+  .cat-icon { font-size: 1.6rem; margin-bottom: 0.6rem; }
+  .cat-name { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.25rem; }
+  .cat-count { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--muted); }
+
+  .articles-section, .all-articles, .search-results {
+    padding: 0 2rem 2rem;
+    display: none;
+  }
+
+  .articles-section.visible, .all-articles.visible, .search-results.visible { display: block; }
+
+  .section-header, .all-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.2rem;
+    padding-top: 0.5rem;
+  }
+
+  .section-title, .all-title {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .section-title .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  .back-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    cursor: pointer;
+    background: none;
+    border: 1px solid var(--border);
+    padding: 0.35rem 0.7rem;
+    border-radius: 5px;
+    transition: all 0.15s;
+  }
+
+  .back-btn:hover { color: var(--text); border-color: var(--text); }
+
+  .articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 0.8rem;
+  }
+
+  .article-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.8rem;
+  }
+
+  .article-card:hover {
+    background: var(--surface2);
+    border-color: var(--hover-color, var(--api));
+    transform: translateX(3px);
+  }
+
+  .article-content { flex: 1; display: flex; flex-direction: column; gap: 0.4rem; }
+  .article-title { font-size: 0.85rem; font-weight: 600; line-height: 1.4; }
+  
+  .badges-container { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .book-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-weight: bold;
+  }
+  .book-badge.b2023 { background: #2e384d; color: #60a5fa; border: 1px solid #3b82f644; }
+  .book-badge.b2024 { background: #4c2d54; color: #f472b6; border: 1px solid #ec489944; }
+
+  .page-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    color: #000;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+
+  .results-label { font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--muted); padding: 0.5rem 0 1rem; }
+  .empty { text-align: center; padding: 4rem 2rem; color: var(--muted); font-size: 0.85rem; }
+
+  /* --- MODALE PDF --- */
+  .pdf-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    justify-content: center;
+    align-items: center;
+  }
+  .pdf-modal.active {
+    display: flex;
+  }
+  .pdf-container {
+    background: var(--surface2);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 900px;
+    height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+  .pdf-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 1.2rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .pdf-toolbar span {
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .close-pdf {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+  .close-pdf:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: white;
+  }
+  #pdfCanvas {
+    width: 100%;
+    flex: 1;
+    object-fit: contain;
+    background: #525659; /* fond gris comme Adobe Reader */
+  }
+
+  .copied {
+    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: var(--bg); padding: 0.5rem 1rem; border-radius: 6px;
+    font-family: 'Space Mono', monospace; font-size: 0.75rem; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 99;
+  }
+  .copied.show { opacity: 1; }
+
+  @media (max-width: 600px) {
+    header { padding: 1.5rem 1rem 1rem; }
+    .tabs { padding: 1rem 1rem 0; }
+    .category-grid { padding: 1rem; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    .articles-grid { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
 <body>
 
 <header>
   <div class="header-top">
     <div class="title-block">
-      <h1>ByteByteGo<br><span>System Design</span> Ultimate</h1>
-      <p>INDEX INTERACTIF GLOBAL — EDITIONS FUSIONNÉES 2023 & 2024</p>
+      <h1>ByteByteGo<br><span>System Design</span> Blueprint</h1>
+      <p>MEGA ARCHIVE FUSIONNÉE • 2 VOLUMES (2023 - 2024)</p>
     </div>
     <div class="stats">
       <div class="stat">
@@ -230,29 +396,29 @@
   </div>
   <div class="search-bar">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input type="text" id="searchInput" placeholder="Rechercher un concept, protocole ou cas d'usage (ex: Kafka, OAuth)..." autocomplete="off">
+    <input type="text" id="searchInput" placeholder="Rechercher un sujet ou un concept sur les deux livres..." autocomplete="off">
   </div>
 </header>
 
 <div class="tabs" id="tabs">
   <div class="tab active" data-view="home" onclick="showHome()">🏠 Accueil</div>
   <div class="tab" data-view="all" onclick="showAll()">📋 Tous <span class="count" id="allCount"></span></div>
-  <div class="tab" data-view="api" onclick="showCategory('api')" style="--c: var(--api)">🔌 API</div>
-  <div class="tab" data-view="db" onclick="showCategory('db')" style="--c: var(--db)">🗄️ Bases</div>
-  <div class="tab" data-view="net" onclick="showCategory('net')" style="--c: var(--net)">🌐 Réseau</div>
-  <div class="tab" data-view="sec" onclick="showCategory('sec')" style="--c: var(--sec)">🔐 Sécurité</div>
-  <div class="tab" data-view="cloud" onclick="showCategory('cloud')" style="--c: var(--cloud)">☁️ Cloud</div>
-  <div class="tab" data-view="msg" onclick="showCategory('msg')" style="--c: var(--msg)">📨 Messaging</div>
-  <div class="tab" data-view="arch" onclick="showCategory('arch')" style="--c: var(--arch)">🏗️ Architecture</div>
-  <div class="tab" data-view="devops" onclick="showCategory('devops')" style="--c: var(--devops)">⚙️ DevOps</div>
-  <div class="tab" data-view="linux" onclick="showCategory('linux')" style="--c: var(--linux)">🐧 Linux</div>
-  <div class="tab" data-view="dsa" onclick="showCategory('dsa')" style="--c: var(--dsa)">📊 Algorithmes</div>
-  <div class="tab" data-view="cache" onclick="showCategory('cache')" style="--c: var(--cache)">💾 Cache</div>
-  <div class="tab" data-view="cases" onclick="showCategory('cases')" style="--c: var(--cases)">🏢 Cas d'usage</div>
-  <div class="tab" data-view="pay" onclick="showCategory('pay')" style="--c: var(--pay)">💳 Paiements</div>
-  <div class="tab" data-view="ai" onclick="showCategory('ai')" style="--c: var(--ai)">🤖 IA & LLM</div>
-  <div class="tab" data-view="git" onclick="showCategory('git')" style="--c: var(--git)">🔀 Git</div>
-  <div class="tab" data-view="prog" onclick="showCategory('prog')" style="--c: var(--prog)">💻 Programmation</div>
+  <div class="tab" onclick="showCategory('api')">🔌 API</div>
+  <div class="tab" onclick="showCategory('db')">🗄️ Bases de données</div>
+  <div class="tab" onclick="showCategory('net')">🌐 Réseau</div>
+  <div class="tab" onclick="showCategory('sec')">🔐 Sécurité</div>
+  <div class="tab" onclick="showCategory('cloud')">☁️ Cloud</div>
+  <div class="tab" onclick="showCategory('msg')">📨 Messaging</div>
+  <div class="tab" onclick="showCategory('arch')">🏗️ Architecture</div>
+  <div class="tab" onclick="showCategory('devops')">⚙️ DevOps</div>
+  <div class="tab" onclick="showCategory('linux')">🐧 Linux</div>
+  <div class="tab" onclick="showCategory('dsa')">📊 Algo & Structs</div>
+  <div class="tab" onclick="showCategory('cache')">💾 Cache</div>
+  <div class="tab" onclick="showCategory('cases')">🏢 Case Studies</div>
+  <div class="tab" onclick="showCategory('pay')">💳 Paiements</div>
+  <div class="tab" onclick="showCategory('ai')">🤖 AI & LLMs</div>
+  <div class="tab" onclick="showCategory('git')">🔀 Git</div>
+  <div class="tab" onclick="showCategory('prog')">💻 Programmation</div>
 </div>
 
 <div class="category-grid" id="homeView"></div>
@@ -270,7 +436,7 @@
 
 <div class="all-articles" id="allArticles">
   <div class="all-header">
-    <div class="all-title">Index Exhaustif (Toutes Éditions)</div>
+    <div class="all-title">Tous les chapitres fusionnés</div>
     <button class="back-btn" onclick="showHome()">← Retour</button>
   </div>
   <div class="articles-grid" id="allGrid"></div>
@@ -281,429 +447,264 @@
   <div class="articles-grid" id="searchGrid"></div>
 </div>
 
+<!-- Modale PDF -->
+<div class="pdf-modal" id="pdfModal">
+  <div class="pdf-container">
+    <div class="pdf-toolbar">
+      <span id="pdfPageInfo">Page 1</span>
+      <button class="close-pdf" onclick="closePdf()">&times;</button>
+    </div>
+    <canvas id="pdfCanvas"></canvas>
+  </div>
+</div>
+
 <div class="copied" id="copiedMsg">Chargement du PDF...</div>
 
 <script>
+// ---- Configuration des catégories (inchangée) ----
 const CATEGORIES = {
-  api:    { label: 'API & Protocoles',       icon: '🔌', color: '#3b82f6' },
-  db:     { label: 'Bases de données',       icon: '🗄️', color: '#10b981' },
-  net:    { label: 'Réseau & Internet',      icon: '🌐', color: '#06b6d4' },
-  sec:    { label: 'Sécurité & Auth',        icon: '🔐', color: '#ef4444' },
-  cloud:  { label: 'Cloud & Infrastructure', icon: '☁️', color: '#8b5cf6' },
-  msg:    { label: 'Messaging & Streaming',  icon: '📨', color: '#f59e0b' },
-  arch:   { label: 'Architecture & Patterns',icon: '🏗️', color: '#ec4899' },
-  devops: { label: 'DevOps & CI/CD',         icon: '⚙️', color: '#f97316' },
-  linux:  { label: 'Linux & Systèmes',       icon: '🐧', color: '#84cc16' },
-  dsa:    { label: 'Algo & Data Structures', icon: '📊', color: '#a78bfa' },
-  cache:  { label: 'Caching',                icon: '💾', color: '#22d3ee' },
-  cases:  { label: 'Case Studies',           icon: '🏢', color: '#fb7185' },
-  pay:    { label: 'Paiements',              icon: '💳', color: '#fbbf24' },
-  ai:     { label: 'AI & LLMs',              icon: '🤖', color: '#c084fc' },
-  git:    { label: 'Git & Versioning',       icon: '🔀', color: '#34d399' },
-  prog:   { label: 'Prog & Langages',        icon: '💻', color: '#60a5fa' }
+  api:   { label: 'API & Protocoles',       icon: '🔌', color: '#3b82f6' },
+  db:    { label: 'Bases de données',        icon: '🗄️', color: '#10b981' },
+  net:   { label: 'Réseau & Internet',       icon: '🌐', color: '#06b6d4' },
+  sec:   { label: 'Sécurité & Auth',          icon: '🔐', color: '#ef4444' },
+  cloud: { label: 'Cloud & Infrastructure',   icon: '☁️', color: '#8b5cf6' },
+  msg:   { label: 'Messaging & Streaming',    icon: '📨', color: '#f59e0b' },
+  arch:  { label: 'Architecture & Patterns',  icon: '🏗️', color: '#ec4899' },
+  devops:{ label: 'DevOps & CI/CD',           icon: '⚙️', color: '#f97316' },
+  linux: { label: 'Linux & Systèmes',          icon: '🐧', color: '#84cc16' },
+  dsa:   { label: 'Algo & Data Structures',   icon: '📊', color: '#a78bfa' },
+  cache: { label: 'Caching',                  icon: '💾', color: '#22d3ee' },
+  cases: { label: 'Case Studies',             icon: '🏢', color: '#fb7185' },
+  pay:   { label: 'Paiements',                icon: '💳', color: '#fbbf24' },
+  ai:    { label: 'AI & LLMs',                icon: '🤖', color: '#c084fc' },
+  git:   { label: 'Git & Versioning',         icon: '🔀', color: '#34d399' },
+  prog:  { label: 'Prog & Langages',          icon: '💻', color: '#60a5fa' },
 };
 
+// ---- Articles (inchangé) ----
 const ARTICLES = [
-  // ==========================================
-  // EDITION 2023 (LIVRE 1)
-  // ==========================================
-  { title: "Explaining 9 types of API testing", page: 7, cat: 'api', book: 2023 }, // [cite: 1]
-  { title: "How is data sent over the internet? What does that have to do with the OSI model? How does TCP/IP fit into this?", page: 10, cat: 'net', book: 2023 }, // [cite: 1]
-  { title: "Top 5 common ways to improve API performance", page: 11, cat: 'api', book: 2023 }, // [cite: 1]
-  { title: "There are over 1,000 engineering blogs. Here are my top 9 favorites:", page: 15, cat: 'prog', book: 2023 }, // [cite: 1]
-  { title: "REST API Authentication Methods", page: 16, cat: 'sec', book: 2023 }, // [cite: 1]
-  { title: "Linux Boot Process Illustrated", page: 18, cat: 'linux', book: 2023 }, // [cite: 1]
-  { title: "Netflix's Tech Stack", page: 22, cat: 'cases', book: 2023 }, // [cite: 1]
-  { title: "What does ACID mean?", page: 26, cat: 'db', book: 2023 }, // [cite: 1]
-  { title: "Oauth 2.0 Explained With Simple Terms", page: 28, cat: 'sec', book: 2023 }, // [cite: 1]
-  { title: "The Evolving Landscape of API Protocols in 2023", page: 30, cat: 'api', book: 2023 }, // [cite: 1]
-  { title: "Linux boot Process Explained", page: 32, cat: 'linux', book: 2023 }, // [cite: 1]
-  { title: "Explaining 8 Popular Network Protocols in 1 Diagram.", page: 34, cat: 'net', book: 2023 }, // [cite: 1]
-  { title: "Data Pipelines Overview", page: 36, cat: 'db', book: 2023 }, // [cite: 1]
-  { title: "CAP, BASE, SOLID, KISS, What do these acronyms mean?", page: 38, cat: 'arch', book: 2023 }, // [cite: 1]
-  { title: "GET, POST, PUT... Common HTTP \"verbs\" in one figure", page: 40, cat: 'api', book: 2023 }, // [cite: 1]
-  { title: "How Do C++, Java, Python Work?", page: 42, cat: 'prog', book: 2023 }, // [cite: 1]
-  { title: "Top 12 Tips for API Security", page: 44, cat: 'sec', book: 2023 }, // [cite: 1]
-  { title: "Our recommended materials to crack your next tech interview", page: 45, cat: 'prog', book: 2023 }, // [cite: 1]
-  { title: "A handy cheat sheet for the most popular cloud services (2023 edition)", page: 49, cat: 'cloud', book: 2023 }, // [cite: 1]
-  { title: "Best ways to test system functionality", page: 51, cat: 'devops', book: 2023 }, // [cite: 1]
-  { title: "Explaining JSON Web Token (JWT) to a 10 year old Kid", page: 53, cat: 'sec', book: 2023 }, // [cite: 1]
-  { title: "How do companies ship code to production?", page: 55, cat: 'devops', book: 2023 }, // [cite: 1]
-  { title: "How does Docker Work? Is Docker still relevant?", page: 57, cat: 'cloud', book: 2023 }, // [cite: 1]
-  { title: "Explaining 8 Popular Network Protocols in 1 Diagram", page: 59, cat: 'net', book: 2023 }, // [cite: 1]
-  { title: "System Design Blueprint: The Ultimate Guide", page: 61, cat: 'arch', book: 2023 }, // [cite: 1]
-  { title: "Key Concepts to Understand Database Sharding", page: 63, cat: 'db', book: 2023 }, // [cite: 1]
-  { title: "Top 5 Software Architectural Patterns", page: 67, cat: 'arch', book: 2023 }, // [cite: 1]
-  { title: "OAuth 2.0 Flows", page: 69, cat: 'sec', book: 2023 }, // [cite: 1]
-  { title: "How did AWS grow from just a few services in 2006 to over 200 fully-featured services?", page: 71, cat: 'cloud', book: 2023 }, // [cite: 1]
-  { title: "HTTPS, SSL Handshake, and Data Encryption Explained to Kids", page: 75, cat: 'sec', book: 2023 }, // [cite: 1]
-  { title: "A nice cheat sheet of different databases in cloud services", page: 77, cat: 'db', book: 2023 }, // [cite: 1]
-  { title: "CI/CD Pipeline Explained in Simple Terms", page: 78, cat: 'devops', book: 2023 }, // [cite: 1]
-  { title: "What does API gateway do?", page: 80, cat: 'api', book: 2023 }, // [cite: 1]
-  { title: "The Code Review Pyramid", page: 82, cat: 'devops', book: 2023 }, // [cite: 1]
-  { title: "A picture is worth a thousand words: 9 best practices for developing microservices", page: 83, cat: 'arch', book: 2023 }, // [cite: 1]
-  { title: "What are the greenest programming languages?", page: 85, cat: 'prog', book: 2023 }, // [cite: 2]
-  { title: "An amazing illustration of how to build a resilient three-tier architecture on AWS", page: 87, cat: 'cloud', book: 2023 }, // [cite: 2]
-  { title: "URL, URI, URN - Do you know the differences?", page: 88, cat: 'net', book: 2023 }, // [cite: 2]
-  { title: "What branching strategies does your team use?", page: 90, cat: 'devops', book: 2023 }, // [cite: 2]
-  { title: "Linux file system explained", page: 90, cat: 'linux', book: 2023 }, // [cite: 2]
-  { title: "What are the data structures used in daily life?", page: 95, cat: 'dsa', book: 2023 }, // [cite: 2]
-  { title: "18 Most-used Linux Commands You Should Know", page: 99, cat: 'linux', book: 2023 }, // [cite: 2]
-  { title: "Would it be nice if the code we wrote automatically turned into architecture diagrams?", page: 101, cat: 'arch', book: 2023 }, // [cite: 2]
-  { title: "Netflix Tech Stack - Part 1 (CI/CD Pipeline)", page: 103, cat: 'devops', book: 2023 }, // [cite: 2]
-  { title: "18 Key Design Patterns Every Developer Should Know", page: 105, cat: 'arch', book: 2023 }, // [cite: 2]
-  { title: "How many API architecture styles do you know?", page: 107, cat: 'api', book: 2023 }, // [cite: 2]
-  { title: "Visualizing a SQL query", page: 109, cat: 'db', book: 2023 }, // [cite: 2]
-  { title: "What distinguishes MVC, MVP, MVVM, MVVM-C, and VIPER architecture patterns from each other?", page: 111, cat: 'arch', book: 2023 }, // [cite: 2]
-  { title: "Almost every software engineer has used Git before, but only a handful know how it works :)", page: 113, cat: 'git', book: 2023 }, // [cite: 2]
-  { title: "I read something unbelievable today: Levels. fyi scaled to millions of users using Google Sheets as a backend!", page: 115, cat: 'cases', book: 2023 }, // [cite: 2]
-  { title: "Best ways to test system functionality", page: 117, cat: 'devops', book: 2023 }, // [cite: 2]
-  { title: "Logging, tracing and metrics are 3 pillars of system observability", page: 119, cat: 'devops', book: 2023 }, // [cite: 2]
-  { title: "Internet Traffic Routing Policies", page: 121, cat: 'net', book: 2023 }, // [cite: 2]
-  { title: "Subjects that should be mandatory in schools", page: 123, cat: 'prog', book: 2023 }, // [cite: 2]
-  { title: "Do you know all the components of a URL?", page: 124, cat: 'net', book: 2023 }, // [cite: 2]
-  { title: "What are the differences between cookies and sessions?", page: 125, cat: 'sec', book: 2023 }, // [cite: 2]
-  { title: "How do DevOps, NoOps change the software development lifecycle (SDLC)?", page: 127, cat: 'devops', book: 2023 }, // [cite: 2]
-  { title: "Popular interview question: What is the difference between Process and Thread?", page: 129, cat: 'linux', book: 2023 }, // [cite: 2]
-  { title: "Top 6 Load Balancing Algorithms", page: 131, cat: 'net', book: 2023 }, // [cite: 2]
-  { title: "Symmetric encryption vs asymmetric encryption", page: 133, cat: 'sec', book: 2023 }, // [cite: 2]
-  { title: "How does Redis persist data?", page: 135, cat: 'db', book: 2023 }, // [cite: 2]
-  { title: "IBM MQ -> RabbitMQ -> Kafka ->Pulsar. How do message queue architectures evolve?", page: 137, cat: 'msg', book: 2023 }, // [cite: 2]
-  { title: "Top 4 Kubernetes Service Types in one diagram", page: 139, cat: 'cloud', book: 2023 }, // [cite: 2]
-  { title: "Explaining 5 unique ID generators in distributed systems", page: 141, cat: 'dsa', book: 2023 }, // [cite: 2]
-  { title: "How Do C++, Java, and Python Function?", page: 143, cat: 'prog', book: 2023 }, // [cite: 2]
-  { title: "How will you design the Stack Overflow website?", page: 145, cat: 'cases', book: 2023 }, // [cite: 2]
-  { title: "Explain the Top 6 Use Cases of Object Stores", page: 147, cat: 'db', book: 2023 }, // [cite: 2]
-  { title: "API VS SDK!", page: 149, cat: 'api', book: 2023 }, // [cite: 2]
-  { title: "A picture is worth a thousand words: 9 best practices for developing microservices", page: 151, cat: 'arch', book: 2023 }, // [cite: 2]
-  { title: "Proxy Vs reverse proxy", page: 152, cat: 'net', book: 2023 }, // [cite: 3]
-  { title: "Git Vs Github", page: 153, cat: 'git', book: 2023 }, // [cite: 3]
-  { title: "Which latency numbers should you know", page: 154, cat: 'arch', book: 2023 }, // [cite: 3]
-  { title: "Eight Data Structures That Power Your Databases. Which one should we pick?", page: 156, cat: 'db', book: 2023 }, // [cite: 3]
-  { title: "How Git Commands Work", page: 158, cat: 'git', book: 2023 }, // [cite: 3]
-  { title: "How to store passwords safely in the database and how to validate a password?", page: 160, cat: 'sec', book: 2023 }, // [cite: 3]
-  { title: "How does Docker Work? Is Docker still relevant?", page: 164, cat: 'cloud', book: 2023 }, // [cite: 3]
-  { title: "Docker vs. Kubernetes. Which one should we use?", page: 166, cat: 'cloud', book: 2023 }, // [cite: 3]
-  { title: "Writing Code that Runs on All Platforms", page: 168, cat: 'prog', book: 2023 }, // [cite: 3]
-  { title: "HTTP Status Code You Should Know", page: 170, cat: 'api', book: 2023 }, // [cite: 3]
-  { title: "Docker 101: Streamlining App Deployment", page: 172, cat: 'cloud', book: 2023 }, // [cite: 3]
-  { title: "Git Merge vs. Rebase vs. Squash Commit", page: 174, cat: 'git', book: 2023 }, // [cite: 3]
-  { title: "Cloud Network Components Cheat Sheet", page: 176, cat: 'net', book: 2023 }, // [cite: 3]
-  { title: "SOAP vs REST vs GraphQL vs RPC", page: 178, cat: 'api', book: 2023 }, // [cite: 3]
-  { title: "10 Key Data Structures We Use Every Day", page: 179, cat: 'dsa', book: 2023 }, // [cite: 3]
-  { title: "What does a typical microservice architecture look like?", page: 181, cat: 'arch', book: 2023 }, // [cite: 3]
-  { title: "My recommended materials for cracking your next technical interview", page: 183, cat: 'prog', book: 2023 }, // [cite: 3]
-  { title: "Uber Tech Stack", page: 185, cat: 'cases', book: 2023 }, // [cite: 3]
-  { title: "Top 5 Caching Strategies", page: 187, cat: 'cache', book: 2023 }, // [cite: 3]
-  { title: "How many message queues do you know?", page: 189, cat: 'msg', book: 2023 }, // [cite: 3]
-  { title: "Why is Kafka fast?", page: 190, cat: 'msg', book: 2023 }, // [cite: 3]
-  { title: "How slack decides to send a notification", page: 192, cat: 'msg', book: 2023 }, // [cite: 3]
-  { title: "Kubernetes Tools Ecosystem", page: 193, cat: 'cloud', book: 2023 }, // [cite: 3]
-  { title: "Cloud Native Landscape", page: 195, cat: 'cloud', book: 2023 }, // [cite: 3]
-  { title: "How does VISA work when we swipe a credit card at a merchant's shop?", page: 196, cat: 'pay', book: 2023 }, // [cite: 3]
-  { title: "A simple visual guide to help people understand the key considerations when designing or using caching systems", page: 198, cat: 'cache', book: 2023 }, // [cite: 3]
-  { title: "What tech stack is commonly used for microservices?", page: 199, cat: 'arch', book: 2023 }, // [cite: 3]
-  { title: "How do we transform a system to be Cloud Native?", page: 201, cat: 'cloud', book: 2023 }, // [cite: 3]
-  { title: "Explaining Sessions, Tokens, JWT, SSO, and OAuth in One Diagram", page: 203, cat: 'sec', book: 2023 }, // [cite: 3]
-  { title: "Most Used Linux Commands Map", page: 204, cat: 'linux', book: 2023 }, // [cite: 3]
-  { title: "What is Event Sourcing? How is it different from normal CRUD design?", page: 205, cat: 'msg', book: 2023 }, // [cite: 3]
-  { title: "What is k8s (Kubernetes)?", page: 207, cat: 'cloud', book: 2023 }, // [cite: 3]
-  { title: "How does Git Work?", page: 209, cat: 'git', book: 2023 }, // [cite: 3]
-  { title: "How does Google Authenticator (or other types of 2-factor authenticators) work?", page: 211, cat: 'sec', book: 2023 }, // [cite: 3]
-  { title: "laaS, PaaS, Cloud Native... How do we get here?", page: 214, cat: 'cloud', book: 2023 }, // [cite: 3]
-  { title: "How does ChatGPT work?", page: 215, cat: 'ai', book: 2023 }, // [cite: 4]
-  { title: "Top Hidden Costs of Cloud Providers", page: 217, cat: 'cloud', book: 2023 }, // [cite: 4]
-  { title: "Algorithms You Should Know Before You Take System Design Interviews", page: 219, cat: 'dsa', book: 2023 }, // [cite: 4]
-  { title: "Understanding Database Types", page: 221, cat: 'db', book: 2023 }, // [cite: 4]
-  { title: "How does gRPC work?", page: 222, cat: 'api', book: 2023 }, // [cite: 4]
-  { title: "How does a Password Manager such as 1Password or Lastpass work? How does it keep our passwords safe?", page: 224, cat: 'sec', book: 2023 }, // [cite: 4]
-  { title: "Types of Software Engineers and Their Typically Required Skills", page: 226, cat: 'prog', book: 2023 }, // [cite: 4]
-  { title: "How does REST API work?", page: 228, cat: 'api', book: 2023 }, // [cite: 4]
-  { title: "Session, cookie, JWT, token, SSO, and OAuth 2.0 - what are they?", page: 229, cat: 'sec', book: 2023 }, // [cite: 4]
-  { title: "Linux commands illustrated on one page!", page: 232, cat: 'linux', book: 2023 }, // [cite: 4]
-  { title: "The Payments Ecosystem", page: 233, cat: 'pay', book: 2023 }, // [cite: 4]
-  { title: "Algorithms You Should Know Before You Take System Design Interviews (updated list)", page: 235, cat: 'dsa', book: 2023 }, // [cite: 4]
-  { title: "How is data transmitted between applications?", page: 236, cat: 'net', book: 2023 }, // [cite: 4]
-  { title: "Cloud Native Anti Patterns", page: 240, cat: 'cloud', book: 2023 }, // [cite: 4]
-  { title: "Uber Tech Stack - CI/CD", page: 242, cat: 'devops', book: 2023 }, // [cite: 4]
-  { title: "How Discord Stores Trillions Of Messages", page: 244, cat: 'cases', book: 2023 }, // [cite: 4]
-  { title: "How to diagnose a mysterious process that's taking too much CPU, memory, IO, etc?", page: 246, cat: 'linux', book: 2023 }, // [cite: 4]
-  { title: "How does Chrome work?", page: 247, cat: 'cases', book: 2023 }, // [cite: 4]
-  { title: "Differences in Event Sourcing System Design", page: 249, cat: 'arch', book: 2023 }, // [cite: 4]
-  { title: "Firewall explained to Kids... and Adults", page: 251, cat: 'sec', book: 2023 }, // [cite: 4]
-  { title: "Paradigm Shift: How Developer to Tester Ratio Changed From 1:1 to 100:1", page: 253, cat: 'devops', book: 2023 }, // [cite: 4]
-  { title: "Why is PostgreSQL voted as the most loved database by developers?", page: 255, cat: 'db', book: 2023 }, // [cite: 4]
-  { title: "8 Key OOP Concepts Every Developer Should Know", page: 257, cat: 'prog', book: 2023 }, // [cite: 4]
-  { title: "Top 6 most commonly used Server Types", page: 259, cat: 'net', book: 2023 }, // [cite: 4]
-  { title: "DevOps vs. SRE vs. Platform Engineering. Do you know the differences?", page: 261, cat: 'devops', book: 2023 }, // [cite: 4]
-  { title: "5 important components of Linux", page: 263, cat: 'linux', book: 2023 }, // [cite: 4]
-  { title: "How to scale a website to support millions of users?", page: 265, cat: 'net', book: 2023 }, // [cite: 4]
-  { title: "What is FedNow (instant payment)", page: 267, cat: 'pay', book: 2023 }, // [cite: 4]
-  { title: "5 ways of Inter-Process Communication", page: 270, cat: 'linux', book: 2023 }, // [cite: 4]
-  { title: "What is a webhook?", page: 272, cat: 'api', book: 2023 }, // [cite: 4]
-  { title: "What tools does your team use to ship code to production and ensure code quality?", page: 274, cat: 'devops', book: 2023 }, // [cite: 4]
-  { title: "Stack Overflow's Architecture: A Very Interesting Case Study", page: 276, cat: 'cases', book: 2023 }, // [cite: 4]
-  { title: "Are you familiar with the Java Collection Framework?", page: 277, cat: 'prog', book: 2023 }, // [cite: 4]
-  { title: "Twitter 1.0 Tech Stack", page: 279, cat: 'cases', book: 2023 }, // [cite: 4]
-  { title: "Linux file permission illustrated", page: 281, cat: 'linux', book: 2023 }, // [cite: 4]
-  { title: "What are the differences between a data warehouse and a data lake?", page: 282, cat: 'db', book: 2023 }, // [cite: 5]
-  { title: "10 principles for building resilient payment systems (by Shopify).", page: 284, cat: 'pay', book: 2023 }, // [cite: 5]
-  { title: "Kubernetes Periodic Table", page: 286, cat: 'cloud', book: 2023 }, // [cite: 5]
-  { title: "Evolution of the Netflix API Architecture", page: 287, cat: 'cases', book: 2023 }, // [cite: 5]
-  { title: "Where do we cache data?", page: 289, cat: 'cache', book: 2023 }, // [cite: 5]
-  { title: "Top 7 Most-Used Distributed System Patterns", page: 291, cat: 'arch', book: 2023 }, // [cite: 5]
-  { title: "How much storage could one purchase with the price of a Tesla Model S?", page: 292, cat: 'cloud', book: 2023 }, // [cite: 5]
-  { title: "How to choose between RPC and RESTful?", page: 293, cat: 'api', book: 2023 }, // [cite: 5]
-  { title: "Netflix Tech Stack - Databases", page: 294, cat: 'db', book: 2023 }, // [cite: 5]
-  { title: "The 10 Algorithms That Dominate Our World", page: 296, cat: 'dsa', book: 2023 }, // [cite: 5]
-  { title: "What is the difference between \"pull\" and \"push\" payments?", page: 298, cat: 'pay', book: 2023 }, // [cite: 5]
-  { title: "ChatGPT - timeline", page: 300, cat: 'ai', book: 2023 }, // [cite: 5]
-  { title: "Why did Amazon Prime Video monitoring move from serverless to monolithic? How can it save 90% cost?", page: 302, cat: 'cloud', book: 2023 }, // [cite: 5]
-  { title: "What is the journey of a Slack message?", page: 303, cat: 'msg', book: 2023 }, // [cite: 5]
-  { title: "How does GraphQL work in the real world?", page: 305, cat: 'api', book: 2023 }, // [cite: 5]
-  { title: "Important Things About HTTP Headers You May Not Know!", page: 307, cat: 'api', book: 2023 }, // [cite: 5]
-  { title: "Think you know everything about McDonald's? What about its event-driven architecture?", page: 308, cat: 'cases', book: 2023 }, // [cite: 5]
-  { title: "How ChatGPT works technically", page: 310, cat: 'ai', book: 2023 }, // [cite: 5]
-  { title: "Choosing the right database is probably the most important technical decision a company will make.", page: 311, cat: 'db', book: 2023 }, // [cite: 5]
-  { title: "How do you become a full-stack developer?", page: 312, cat: 'prog', book: 2023 }, // [cite: 5]
-  { title: "What's New in GPT-4", page: 314, cat: 'ai', book: 2023 }, // [cite: 5]
-  { title: "Backend Burger", page: 315, cat: 'prog', book: 2023 }, // [cite: 5]
-  { title: "How do we design effective and safe APIs?", page: 316, cat: 'api', book: 2023 }, // [cite: 5]
-  { title: "Which SQL statements are most commonly used?", page: 317, cat: 'db', book: 2023 }, // [cite: 5]
-  { title: "Two common data processing models: Batch v.s. Stream Processing. What are the differences?", page: 318, cat: 'msg', book: 2023 }, // [cite: 5]
-  { title: "Top 10 Architecture Characteristics / Non-Functional Requirements with Cheatsheet", page: 320, cat: 'arch', book: 2023 }, // [cite: 5]
-  { title: "Are serverless databases the future? How do serverless databases differ from traditional cloud databases?", page: 321, cat: 'db', book: 2023 }, // [cite: 5]
-  { title: "Why do we need message brokers?", page: 323, cat: 'msg', book: 2023 }, // [cite: 5]
-  { title: "How does Twitter recommend \"For You\" Timeline in 1.5 seconds?", page: 325, cat: 'cases', book: 2023 }, // [cite: 5]
-  { title: "Popular interview question: what happens when you type \"ssh hostname\"?", page: 327, cat: 'net', book: 2023 }, // [cite: 5]
-  { title: "Discover Amazon's innovative build system - Brazil.", page: 329, cat: 'cases', book: 2023 }, // [cite: 5]
-  { title: "Possible Experiment Platform Architecture", page: 331, cat: 'cases', book: 2023 }, // [cite: 5]
-  { title: "YouTube handles 500+ hours of video content uploads every minute on average. How does it manage this?", page: 333, cat: 'cases', book: 2023 }, // [cite: 5, 6]
-  { title: "A beginner's guide to CDN (Content Delivery Network)", page: 335, cat: 'net', book: 2023 }, // [cite: 6]
-  { title: "What are the API architectural styles?", page: 337, cat: 'api', book: 2023 }, // [cite: 6]
-  { title: "Cloud-native vs. Cloud computing", page: 339, cat: 'cloud', book: 2023 }, // [cite: 6]
-  { title: "C, C++, Java, Javascript, Typescript, Golang, Rust...", page: 341, cat: 'prog', book: 2023 }, // [cite: 6]
-  { title: "The Linux Storage Stack Diagram shows the layout of the the Linux storage stack", page: 343, cat: 'linux', book: 2023 }, // [cite: 6]
-  { title: "Breaking down what's going on with the Silicon Valley Bank (SVB) collapse", page: 344, cat: 'cases', book: 2023 }, // [cite: 6]
-
-  // ==========================================
-  // EDITION 2024 (LIVRE 2)
-  // ==========================================
-  { title: "Big Endian vs Little Endian", page: 7, cat: 'prog', book: 2024 }, // [cite: 7]
-  { title: "How do we incorporate Event Sourcing into the systems?", page: 9, cat: 'msg', book: 2024 }, // [cite: 7]
-  { title: "How can Cache Systems go wrong", page: 11, cat: 'cache', book: 2024 }, // [cite: 7]
-  { title: "Linux file system explained", page: 13, cat: 'linux', book: 2024 }, // [cite: 7]
-  { title: "My recommended materials for cracking your next technical interview", page: 14, cat: 'prog', book: 2024 }, // [cite: 7]
-  { title: "How Git Commands work", page: 16, cat: 'git', book: 2024 }, // [cite: 7]
-  { title: "Top 4 Most Popular Use Cases for UDP", page: 17, cat: 'net', book: 2024 }, // [cite: 7]
-  { title: "How Does a Typical Push Notification System Work?", page: 18, cat: 'msg', book: 2024 }, // [cite: 7]
-  { title: "How can Cache Systems go wrong?", page: 20, cat: 'cache', book: 2024 }, // [cite: 7]
-  { title: "REST API Cheatsheet", page: 22, cat: 'api', book: 2024 }, // [cite: 7]
-  { title: "Top 8 Programming Paradigms - Part 1", page: 23, cat: 'prog', book: 2024 }, // [cite: 7]
-  { title: "Data Pipelines Overview", page: 25, cat: 'db', book: 2024 }, // [cite: 7]
-  { title: "API VS SDK", page: 27, cat: 'api', book: 2024 }, // [cite: 7]
-  { title: "A handy cheat sheet for the most popular cloud services", page: 29, cat: 'cloud', book: 2024 }, // [cite: 7]
-  { title: "A nice cheat sheet of different monitoring infrastructure in cloud services", page: 30, cat: 'cloud', book: 2024 }, // [cite: 7]
-  { title: "REST API Vs. GraphQL", page: 32, cat: 'api', book: 2024 }, // [cite: 7]
-  { title: "Key Use Cases for Load Balancers", page: 34, cat: 'net', book: 2024 }, // [cite: 7]
-  { title: "Top 6 Firewall Use Cases", page: 36, cat: 'sec', book: 2024 }, // [cite: 7]
-  { title: "Types of memory. Which ones do you know?", page: 38, cat: 'dsa', book: 2024 }, // [cite: 7]
-  { title: "How Do C++, Java, Python Work?", page: 40, cat: 'prog', book: 2024 }, // [cite: 7]
-  { title: "Top 6 Load Balancing Algorithms", page: 41, cat: 'net', book: 2024 }, // [cite: 7]
-  { title: "How does Git work?", page: 43, cat: 'git', book: 2024 }, // [cite: 7]
-  { title: "HTTP Cookies Explained With a Simple Diagram", page: 44, cat: 'sec', book: 2024 }, // [cite: 7]
-  { title: "How does a ChatGPT-like system work?", page: 45, cat: 'ai', book: 2024 }, // [cite: 7]
-  { title: "A cheat sheet for system designs", page: 47, cat: 'arch', book: 2024 }, // [cite: 7]
-  { title: "Cloud Disaster Recovery Strategies", page: 49, cat: 'cloud', book: 2024 }, // [cite: 7]
-  { title: "Visualizing a SQL query", page: 51, cat: 'db', book: 2024 }, // [cite: 7]
-  { title: "How does REST API work?", page: 52, cat: 'api', book: 2024 }, // [cite: 7]
-  { title: "Explaining 9 types of API testing", page: 53, cat: 'api', book: 2024 }, // [cite: 7]
-  { title: "Git Merge vs. Rebase vs. Squash Commit!", page: 55, cat: 'git', book: 2024 }, // [cite: 7]
-  { title: "What is a cookie?", page: 57, cat: 'sec', book: 2024 }, // [cite: 7]
-  { title: "How does a VPN work?", page: 59, cat: 'net', book: 2024 }, // [cite: 7]
-  { title: "Top Software Architectural Styles", page: 61, cat: 'arch', book: 2024 }, // [cite: 7]
-  { title: "Understanding Database Types", page: 63, cat: 'db', book: 2024 }, // [cite: 7]
-  { title: "Cloud Security Cheat Sheet", page: 64, cat: 'sec', book: 2024 }, // [cite: 7]
-  { title: "GitOps Workflow - Simplified Visual Guide", page: 66, cat: 'devops', book: 2024 }, // [cite: 7]
-  { title: "How does \"scan to pay\" work?", page: 68, cat: 'pay', book: 2024 }, // [cite: 7]
-  { title: "How do Search Engines Work?", page: 70, cat: 'cases', book: 2024 }, // [cite: 7]
-  { title: "The Payments Ecosystem", page: 72, cat: 'pay', book: 2024 }, // [cite: 7]
-  { title: "Object-oriented Programming: A Primer", page: 74, cat: 'prog', book: 2024 }, // [cite: 8]
-  { title: "Where do we cache data?", page: 75, cat: 'cache', book: 2024 }, // [cite: 8]
-  { title: "Flowchart of how slack decides to send a notification", page: 77, cat: 'msg', book: 2024 }, // [cite: 8]
-  { title: "What is the best way to learn SQL?", page: 78, cat: 'db', book: 2024 }, // [cite: 8]
-  { title: "What is gRPC?", page: 79, cat: 'api', book: 2024 }, // [cite: 8]
-  { title: "How do live streaming platforms like YouTube Live, Tik Tok Live, or Twitch work?", page: 80, cat: 'cases', book: 2024 }, // [cite: 8]
-  { title: "Linux Boot Process Illustrated", page: 83, cat: 'linux', book: 2024 }, // [cite: 8]
-  { title: "How does Visa make money?", page: 85, cat: 'pay', book: 2024 }, // [cite: 8]
-  { title: "Session, Cookie, JWT, Token, SSO, and OAuth 2.0 Explained in One Diagram", page: 87, cat: 'sec', book: 2024 }, // [cite: 8]
-  { title: "How do we manage configurations in a system?", page: 89, cat: 'devops', book: 2024 }, // [cite: 8]
-  { title: "What is CSS (Cascading Style Sheets)?", page: 91, cat: 'prog', book: 2024 }, // [cite: 8]
-  { title: "What is GraphQL? Is it a replacement for the REST API?", page: 93, cat: 'api', book: 2024 }, // [cite: 8]
-  { title: "System Design Blueprint: The Ultimate Guide", page: 95, cat: 'arch', book: 2024 }, // [cite: 8]
-  { title: "Polling Vs Webhooks", page: 97, cat: 'api', book: 2024 }, // [cite: 8]
-  { title: "How are notifications pushed to our phones or PCs?", page: 99, cat: 'msg', book: 2024 }, // [cite: 8]
-  { title: "9 best practices for developing microservices", page: 101, cat: 'arch', book: 2024 }, // [cite: 8]
-  { title: "Oauth 2.0 Explained With Simple Terms", page: 102, cat: 'sec', book: 2024 }, // [cite: 8]
-  { title: "How do companies ship code to production?", page: 104, cat: 'devops', book: 2024 }, // [cite: 8]
-  { title: "How do we manage sensitive data in a system?", page: 106, cat: 'sec', book: 2024 }, // [cite: 8]
-  { title: "Cloud Load Balancer Cheat Sheet", page: 108, cat: 'cloud', book: 2024 }, // [cite: 8]
-  { title: "What does ACID mean?", page: 110, cat: 'db', book: 2024 }, // [cite: 8]
-  { title: "CAP, BASE, SOLID, KISS, What do these acronyms mean?", page: 112, cat: 'arch', book: 2024 }, // [cite: 8]
-  { title: "System Design cheat sheet", page: 114, cat: 'arch', book: 2024 }, // [cite: 8]
-  { title: "How will you design the Stack Overflow website?", page: 116, cat: 'cases', book: 2024 }, // [cite: 8]
-  { title: "A nice cheat sheet of different cloud services", page: 118, cat: 'cloud', book: 2024 }, // [cite: 8]
-  { title: "The one-line change that reduced clone times by a whopping 99%, says Pinterest", page: 120, cat: 'cases', book: 2024 }, // [cite: 8]
-  { title: "Best ways to test system functionality", page: 122, cat: 'devops', book: 2024 }, // [cite: 8]
-  { title: "Encoding vs Encryption vs Tokenization", page: 124, cat: 'sec', book: 2024 }, // [cite: 8]
-  { title: "Kubernetes Tools Stack Wheel", page: 126, cat: 'cloud', book: 2024 }, // [cite: 8]
-  { title: "How does Docker work?", page: 128, cat: 'cloud', book: 2024 }, // [cite: 8]
-  { title: "Top 6 Database Models", page: 130, cat: 'db', book: 2024 }, // [cite: 8]
-  { title: "How do we detect node failures in distributed systems?", page: 132, cat: 'arch', book: 2024 }, // [cite: 8]
-  { title: "10 Good Coding Principles to improve code quality", page: 134, cat: 'prog', book: 2024 }, // [cite: 8]
-  { title: "15 Open-Source Projects That Changed the World", page: 136, cat: 'cases', book: 2024 }, // [cite: 8]
-  { title: "Reverse proxy vs. API gateway vs. load balancer", page: 138, cat: 'net', book: 2024 }, // [cite: 8]
-  { title: "Linux Performance Observability Tools", page: 140, cat: 'linux', book: 2024 }, // [cite: 8]
-  { title: "Top 9 website performance metrics you cannot ignore", page: 141, cat: 'net', book: 2024 }, // [cite: 8]
-  { title: "How do we manage data?", page: 143, cat: 'db', book: 2024 }, // [cite: 8]
-  { title: "Postman vs. Insomnia vs. ReadyAPI vs. Thunder Client vs. Hoppscotch", page: 145, cat: 'api', book: 2024 }, // [cite: 8]
-  { title: "How does gRPC work?", page: 147, cat: 'api', book: 2024 }, // [cite: 9, 10]
-  { title: "Have you heard of the 12-Factor App?", page: 151, cat: 'arch', book: 2024 }, // [cite: 10]
-  { title: "How does Redis architecture evolve?", page: 153, cat: 'cache', book: 2024 }, // [cite: 10]
-  { title: "Cloud Cost Reduction Techniques", page: 155, cat: 'cloud', book: 2024 }, // [cite: 10]
-  { title: "Linux file permission illustrated", page: 157, cat: 'linux', book: 2024 }, // [cite: 10]
-  { title: "My Top 9 Favorite Engineering Blogs", page: 158, cat: 'prog', book: 2024 }, // [cite: 10]
-  { title: "9 Best Practices for Building Microservices", page: 160, cat: 'arch', book: 2024 }, // [cite: 10]
-  { title: "Roadmap for Learning Cyber Security", page: 162, cat: 'sec', book: 2024 }, // [cite: 10]
-  { title: "How does Javascript Work?", page: 163, cat: 'prog', book: 2024 }, // [cite: 10]
-  { title: "Can Kafka Lose Messages?", page: 165, cat: 'msg', book: 2024 }, // [cite: 10]
-  { title: "You're Decent at Linux if You Know What Those Directories Mean :)", page: 167, cat: 'linux', book: 2024 }, // [cite: 10]
-  { title: "Netflix's Tech Stack", page: 169, cat: 'cases', book: 2024 }, // [cite: 10]
-  { title: "Top 5 Kafka use cases", page: 171, cat: 'msg', book: 2024 }, // [cite: 10]
-  { title: "Top 6 Cloud Messaging Patterns.", page: 172, cat: 'msg', book: 2024 }, // [cite: 10]
-  { title: "How Netflix Really Uses Java?", page: 175, cat: 'cases', book: 2024 }, // [cite: 10]
-  { title: "Top 9 Architectural Patterns for Data and Communication Flow", page: 177, cat: 'arch', book: 2024 }, // [cite: 10]
-  { title: "What Are the Most Important AWS Services To Learn?", page: 179, cat: 'cloud', book: 2024 }, // [cite: 10]
-  { title: "8 Key Data Structures That Power Modern Databases", page: 181, cat: 'db', book: 2024 }, // [cite: 10]
-  { title: "How do we design effective and safe APIs?", page: 182, cat: 'api', book: 2024 }, // [cite: 10]
-  { title: "Who are the Fantastic Four of System Design?", page: 183, cat: 'arch', book: 2024 }, // [cite: 10]
-  { title: "How do we design a secure system?", page: 185, cat: 'sec', book: 2024 }, // [cite: 10]
-  { title: "Things Every Developer Should Know: Concurrency is NOT parallelism.", page: 187, cat: 'prog', book: 2024 }, // [cite: 10]
-  { title: "HTTPS, SSL Handshake, and Data Encryption Explained to Kids.", page: 189, cat: 'sec', book: 2024 }, // [cite: 10]
-  { title: "Top 5 Software Architectural Patterns", page: 191, cat: 'arch', book: 2024 }, // [cite: 10]
-  { title: "Top 6 Tools to Turn Code into Beautiful Diagrams", page: 193, cat: 'arch', book: 2024 }, // [cite: 10]
-  { title: "Everything is a trade-off.", page: 194, cat: 'arch', book: 2024 }, // [cite: 10]
-  { title: "What is DevSecOps?", page: 196, cat: 'sec', book: 2024 }, // [cite: 10]
-  { title: "Top 8 Cache Eviction Strategies.", page: 198, cat: 'cache', book: 2024 }, // [cite: 10]
-  { title: "Linux Boot Process Explained", page: 200, cat: 'linux', book: 2024 }, // [cite: 10]
-  { title: "Unusual Evolution of the Netflix API Architecture", page: 202, cat: 'cases', book: 2024 }, // [cite: 10]
-  { title: "GET, POST, PUT... Common HTTP \"verbs\" in one figure", page: 204, cat: 'api', book: 2024 }, // [cite: 10]
-  { title: "Top 8 C++ Use Cases", page: 206, cat: 'prog', book: 2024 }, // [cite: 10]
-  { title: "Top 4 data sharding algorithms explained.", page: 208, cat: 'db', book: 2024 }, // [cite: 10]
-  { title: "10 years ago, Amazon found that every 100ms of latency cost them 1% in sales.", page: 210, cat: 'cases', book: 2024 }, // [cite: 10]
-  { title: "Load Balancer Realistic Use Cases You May Not Know", page: 212, cat: 'net', book: 2024 }, // [cite: 10]
-  { title: "25 Papers That Completely Transformed the Computer World.", page: 214, cat: 'cases', book: 2024 }, // [cite: 10]
-  { title: "IPv4 vs. IPv6, what are the differences?", page: 216, cat: 'net', book: 2024 }, // [cite: 10]
-  { title: "My Favorite 10 Books for Software Developers", page: 218, cat: 'prog', book: 2024 }, // [cite: 10]
-  { title: "Change Data Capture: Key to Leverage Real-Time Data", page: 220, cat: 'db', book: 2024 }, // [cite: 11]
-  { title: "Netflix's Overall Architecture", page: 222, cat: 'cases', book: 2024 }, // [cite: 11]
-  { title: "Top 5 common ways to improve API performance.", page: 224, cat: 'api', book: 2024 }, // [cite: 11]
-  { title: "How to diagnose a mysterious process that's taking too much CPU, memory, IO, etc?", page: 226, cat: 'linux', book: 2024 }, // [cite: 11]
-  { title: "What is a deadlock?", page: 227, cat: 'dsa', book: 2024 }, // [cite: 11]
-  { title: "What's the difference between Session-based authentication and JWTs?", page: 229, cat: 'sec', book: 2024 }, // [cite: 11]
-  { title: "Top 9 Cases Behind 100% CPU Usage.", page: 231, cat: 'linux', book: 2024 }, // [cite: 11]
-  { title: "Top 6 ElasticSearch Use Cases.", page: 233, cat: 'db', book: 2024 }, // [cite: 11]
-  { title: "AWS Services Cheat Sheet", page: 235, cat: 'cloud', book: 2024 }, // [cite: 11]
-  { title: "How do computer programs run?", page: 236, cat: 'prog', book: 2024 }, // [cite: 11]
-  { title: "A cheat sheet for API designs.", page: 238, cat: 'api', book: 2024 }, // [cite: 11]
-  { title: "Azure Services Cheat Sheet", page: 240, cat: 'cloud', book: 2024 }, // [cite: 11]
-  { title: "Why is Kafka fast?", page: 241, cat: 'msg', book: 2024 }, // [cite: 11]
-  { title: "How do we retry on failures?", page: 243, cat: 'arch', book: 2024 }, // [cite: 11]
-  { title: "7 must-know strategies to scale your database.", page: 245, cat: 'db', book: 2024 }, // [cite: 11]
-  { title: "Reddit's Core Architecture that helps it serve over 1 billion users every month.", page: 247, cat: 'cases', book: 2024 }, // [cite: 11]
-  { title: "Everything You Need to Know About Cross-Site Scripting (XSS).", page: 249, cat: 'sec', book: 2024 }, // [cite: 11]
-  { title: "15 Open-Source Projects That Changed the World", page: 251, cat: 'cases', book: 2024 }, // [cite: 11]
-  { title: "Types of Memory and Storage", page: 253, cat: 'dsa', book: 2024 }, // [cite: 11]
-  { title: "How to load your websites at lightning speed?", page: 254, cat: 'net', book: 2024 }, // [cite: 11]
-  { title: "25 Papers That Completely Transformed the Computer World.", page: 256, cat: 'cases', book: 2024 }, // [cite: 11]
-  { title: "10 Essential Components of a Production Web Application.", page: 258, cat: 'arch', book: 2024 }, // [cite: 11]
-  { title: "Top 8 Standards Every Developer Should Know.", page: 259, cat: 'prog', book: 2024 }, // [cite: 11]
-  { title: "Explaining JSON Web Token (JWT) with simple terms.", page: 261, cat: 'sec', book: 2024 }, // [cite: 11]
-  { title: "11 steps to go from Junior to Senior Developer.", page: 262, cat: 'prog', book: 2024 }, // [cite: 11]
-  { title: "Top 8 must-know Docker concepts", page: 264, cat: 'cloud', book: 2024 }, // [cite: 11]
-  { title: "Top 10 Most Popular Open-Source Databases", page: 266, cat: 'db', book: 2024 }, // [cite: 11]
-  { title: "What does a typical microservice architecture look like?", page: 267, cat: 'arch', book: 2024 }, // [cite: 11]
-  { title: "What is SSO (Single Sign-On)?", page: 269, cat: 'sec', book: 2024 }, // [cite: 11]
-  { title: "What makes HTTP2 faster than HTTP1?", page: 271, cat: 'net', book: 2024 }, // [cite: 11]
-  { title: "Log Parsing Cheat Sheet", page: 273, cat: 'devops', book: 2024 }, // [cite: 11]
-  { title: "4 Ways Netflix Uses Caching to Hold User Attention", page: 275, cat: 'cases', book: 2024 }, // [cite: 11]
-  { title: "Top 6 Cases to Apply Idempotency.", page: 277, cat: 'arch', book: 2024 }, // [cite: 11]
-  { title: "MVC, MVP, MVVM, MVVM-C, and VIPER architecture patterns", page: 279, cat: 'arch', book: 2024 }, // [cite: 11]
-  { title: "What are the differences among database locks?", page: 280, cat: 'db', book: 2024 }, // [cite: 11]
-  { title: "How do we Perform Pagination in API Design?", page: 282, cat: 'api', book: 2024 }, // [cite: 11]
-  { title: "What happens when you type a URL into your browser?", page: 284, cat: 'net', book: 2024 }, // [cite: 11]
-  { title: "How do you pay from your digital wallet by scanning the QR code?", page: 286, cat: 'pay', book: 2024 }, // [cite: 11]
-  { title: "What do Amazon, Netflix, and Uber have in common?", page: 288, cat: 'cases', book: 2024 }, // [cite: 11]
-  { title: "100X Postgres Scaling at Figma.", page: 290, cat: 'cases', book: 2024 }, // [cite: 11]
-  { title: "How to store passwords safely in the database and how to validate a password?", page: 292, cat: 'sec', book: 2024 }, // [cite: 11]
-  { title: "Cybersecurity 101 in one picture.", page: 294, cat: 'sec', book: 2024 }, // [cite: 12]
-  { title: "What do version numbers mean?", page: 295, cat: 'devops', book: 2024 }, // [cite: 12]
-  { title: "What is k8s (Kubernetes)?", page: 297, cat: 'cloud', book: 2024 }, // [cite: 12]
-  { title: "HTTP Status Code You Should Know", page: 299, cat: 'api', book: 2024 }, // [cite: 12]
-  { title: "18 Most-used Linux Commands You Should Know", page: 300, cat: 'linux', book: 2024 }, // [cite: 12]
-  { title: "Iterative, Agile, Waterfall, Spiral Model, RAD Model... What are the differences?", page: 302, cat: 'prog', book: 2024 }, // [cite: 12]
-  { title: "Design Patterns Cheat Sheet - Part 1 and Part 2", page: 304, cat: 'arch', book: 2024 }, // [cite: 12]
-  { title: "9 Essential Components of a Production Microservice Application", page: 305, cat: 'arch', book: 2024 }, // [cite: 12]
-  { title: "Which latency numbers you should know?", page: 307, cat: 'arch', book: 2024 }, // [cite: 12]
-  { title: "API Gateway 101", page: 309, cat: 'api', book: 2024 }, // [cite: 12]
-  { title: "A Roadmap for Full-Stack Development.", page: 310, cat: 'prog', book: 2024 }, // [cite: 12]
-  { title: "OAuth 2.0 Flows", page: 312, cat: 'sec', book: 2024 }, // [cite: 12]
-  { title: "10 Key Data Structures We Use Every Day", page: 313, cat: 'dsa', book: 2024 }, // [cite: 12]
-  { title: "Top 10 k8s Design Patterns", page: 315, cat: 'cloud', book: 2024 }, // [cite: 12]
-  { title: "What is a Load Balancer?", page: 317, cat: 'net', book: 2024 }, // [cite: 12]
-  { title: "8 Common System Design Problems and Solutions", page: 319, cat: 'arch', book: 2024 }, // [cite: 12]
-  { title: "How does SSH work?", page: 321, cat: 'sec', book: 2024 }, // [cite: 12]
-  { title: "How to load your websites at lightning speed?", page: 322, cat: 'net', book: 2024 }, // [cite: 12]
-  { title: "Why is Nginx so popular?", page: 324, cat: 'net', book: 2024 }, // [cite: 12]
-  { title: "How Discord Stores Trillions of Messages", page: 325, cat: 'cases', book: 2024 }, // [cite: 12]
-  { title: "How does Garbage Collection work?", page: 327, cat: 'prog', book: 2024 }, // [cite: 12]
-  { title: "A Cheat Sheet for Designing Fault-Tolerant Systems.", page: 329, cat: 'arch', book: 2024 }, // [cite: 12]
-  { title: "If you don't know trade-offs, you DON'T KNOW system design.", page: 331, cat: 'arch', book: 2024 }, // [cite: 12]
-  { title: "8 Tips for Efficient API Design.", page: 333, cat: 'api', book: 2024 }, // [cite: 12]
-  { title: "The Ultimate Kafka 101 You Cannot Miss", page: 335, cat: 'msg', book: 2024 }, // [cite: 12]
-  { title: "A Cheatsheet for UML Class Diagrams", page: 336, cat: 'arch', book: 2024 }, // [cite: 12]
-  { title: "20 Popular Open Source Projects Started or Supported By Big Companies", page: 339, cat: 'cases', book: 2024 }, // [cite: 12]
-  { title: "A Crash Course on Database Sharding", page: 341, cat: 'db', book: 2024 }, // [cite: 12]
-  { title: "Is PostgreSQL eating the database world?", page: 343, cat: 'db', book: 2024 }, // [cite: 12]
-  { title: "The Ultimate Software Architect Knowledge Map", page: 344, cat: 'arch', book: 2024 }, // [cite: 12]
-  { title: "A Crash Course on Scaling the Data Layer", page: 347, cat: 'db', book: 2024 }, // [cite: 12]
-  { title: "How can Cache Systems go wrong?", page: 348, cat: 'cache', book: 2024 }, // [cite: 12]
-  { title: "4 Popular GraphQL Adoption Patterns", page: 350, cat: 'api', book: 2024 }, // [cite: 12]
-  { title: "Top 8 Popular Network Protocols", page: 352, cat: 'net', book: 2024 }, // [cite: 12]
-  { title: "11 Things I learned about API Development from POST/CON 2024 by Postman.", page: 353, cat: 'api', book: 2024 }, // [cite: 12]
-  { title: "How do Search Engines really Work?", page: 355, cat: 'cases', book: 2024 }, // [cite: 12]
-  { title: "The Ultimate Walkthrough of the Generative Al Landscape", page: 357, cat: 'ai', book: 2024 }, // [cite: 12]
-  { title: "Cheatsheet on Relational Database Design", page: 358, cat: 'db', book: 2024 }, // [cite: 12]
-  { title: "My Favorite 10 Soft Skill Books that Can Help You Become a Better Developer", page: 360, cat: 'prog', book: 2024 }, // [cite: 12]
-  { title: "REST API Authentication Methods", page: 362, cat: 'sec', book: 2024 }, // [cite: 12]
-  { title: "The Evolving Landscape of API Protocols", page: 366, cat: 'api', book: 2024 } // [cite: 12]
+  { title: "Explaining 9 types of API testing", page: 7, cat: 'api', book: 2023 },
+  { title: "How is data sent over the internet? OSI model, TCP/IP?", page: 10, cat: 'net', book: 2023 },
+  { title: "Top 5 common ways to improve API performance", page: 11, cat: 'api', book: 2023 },
+  { title: "REST API Authentication Methods", page: 16, cat: 'api', book: 2023 },
+  { title: "Top 12 Tips for API Security", page: 44, cat: 'api', book: 2023 },
+  { title: "GET, POST, PUT... Common HTTP verbs in one figure", page: 40, cat: 'api', book: 2023 },
+  { title: "HTTP Status Codes You Should Know", page: 170, cat: 'api', book: 2023 },
+  { title: "API Vs SDK", page: 149, cat: 'api', book: 2023 },
+  { title: "What does API gateway do?", page: 80, cat: 'api', book: 2023 },
+  { title: "How do we design effective and safe APIs?", page: 316, cat: 'api', book: 2023 },
+  { title: "How to choose between RPC and RESTful?", page: 293, cat: 'api', book: 2023 },
+  { title: "How many API architecture styles do you know?", page: 107, cat: 'api', book: 2023 },
+  { title: "The Evolving Landscape of API Protocols in 2023", page: 30, cat: 'api', book: 2023 },
+  { title: "SOAP vs REST vs GraphQL vs RPC", page: 178, cat: 'api', book: 2023 },
+  { title: "How does REST API work?", page: 228, cat: 'api', book: 2023 },
+  { title: "How does gRPC work?", page: 222, cat: 'api', book: 2023 },
+  { title: "How does GraphQL work in the real world?", page: 305, cat: 'api', book: 2023 },
+  { title: "Important Things About HTTP Headers You May Not Know", page: 307, cat: 'api', book: 2023 },
+  { title: "What does ACID mean?", page: 26, cat: 'db', book: 2023 },
+  { title: "Key Concepts to Understand Database Sharding", page: 63, cat: 'db', book: 2023 },
+  { title: "A nice cheat sheet of different databases in cloud services", page: 77, cat: 'db', book: 2023 },
+  { title: "Visualizing a SQL query", page: 109, cat: 'db', book: 2023 },
+  { title: "How does Redis persist data?", page: 135, cat: 'db', book: 2023 },
+  { title: "Eight Data Structures That Power Your Databases", page: 156, cat: 'db', book: 2023 },
+  { title: "How to store passwords safely in the database", page: 160, cat: 'db', book: 2023 },
+  { title: "Understanding Database Types", page: 221, cat: 'db', book: 2023 },
+  { title: "Why is PostgreSQL the most loved database by developers?", page: 255, cat: 'db', book: 2023 },
+  { title: "Netflix Tech Stack - Databases", page: 294, cat: 'db', book: 2023 },
+  { title: "What are the differences between a data warehouse and a data lake?", page: 282, cat: 'db', book: 2023 },
+  { title: "Choosing the right database", page: 311, cat: 'db', book: 2023 },
+  { title: "Are serverless databases the future?", page: 321, cat: 'db', book: 2023 },
+  { title: "Which SQL statements are most commonly used?", page: 317, cat: 'db', book: 2023 },
+  { title: "Explaining 8 Popular Network Protocols in 1 Diagram", page: 34, cat: 'net', book: 2023 },
+  { title: "URL, URI, URN - Do you know the differences?", page: 88, cat: 'net', book: 2023 },
+  { title: "Internet Traffic Routing Policies", page: 121, cat: 'net', book: 2023 },
+  { title: "Do you know all the components of a URL?", page: 124, cat: 'net', book: 2023 },
+  { title: "Top 6 Load Balancing Algorithms", page: 131, cat: 'net', book: 2023 },
+  { title: "Proxy Vs Reverse Proxy", page: 152, cat: 'net', book: 2023 },
+  { title: "Cloud Network Components Cheat Sheet", page: 176, cat: 'net', book: 2023 },
+  { title: "How is data transmitted between applications?", page: 236, cat: 'net', book: 2023 },
+  { title: "How to scale a website to support millions of users?", page: 265, cat: 'net', book: 2023 },
+  { title: "Top 6 most commonly used Server Types", page: 259, cat: 'net', book: 2023 },
+  { title: "Popular interview question: what happens when you type 'ssh hostname'?", page: 327, cat: 'net', book: 2023 },
+  { title: "OAuth 2.0 Explained With Simple Terms", page: 28, cat: 'sec', book: 2023 },
+  { title: "HTTPS, SSL Handshake, and Data Encryption Explained", page: 75, cat: 'sec', book: 2023 },
+  { title: "Symmetric encryption vs asymmetric encryption", page: 133, cat: 'sec', book: 2023 },
+  { title: "Explaining Sessions, Tokens, JWT, SSO, and OAuth in One Diagram", page: 203, cat: 'sec', book: 2023 },
+  { title: "How does Google Authenticator (2FA) work?", page: 211, cat: 'sec', book: 2023 },
+  { title: "How does a Password Manager such as 1Password work?", page: 224, cat: 'sec', book: 2023 },
+  { title: "Session, cookie, JWT, token, SSO, and OAuth 2.0 - what are they?", page: 229, cat: 'sec', book: 2023 },
+  { title: "Firewall explained to Kids and Adults", page: 251, cat: 'sec', book: 2023 },
+  { title: "Explaining JSON Web Token (JWT) to a 10 year old Kid", page: 53, cat: 'sec', book: 2023 },
+  { title: "What are the differences between cookies and sessions?", page: 125, cat: 'sec', book: 2023 },
+  { title: "OAuth 2.0 Flows", page: 69, cat: 'sec', book: 2023 },
+  { title: "A handy cheat sheet for the most popular cloud services (2023)", page: 49, cat: 'cloud', book: 2023 },
+  { title: "How did AWS grow from just a few services to 200+?", page: 71, cat: 'cloud', book: 2023 },
+  { title: "Three-tier architecture on AWS", page: 87, cat: 'cloud', book: 2023 },
+  { title: "Top 4 Kubernetes Service Types in one diagram", page: 139, cat: 'cloud', book: 2023 },
+  { title: "Docker vs. Kubernetes — Which one should we use?", page: 166, cat: 'cloud', book: 2023 },
+  { title: "Docker 101: Streamlining App Deployment", page: 172, cat: 'cloud', book: 2023 },
+  { title: "How does Docker Work? Is Docker still relevant?", page: 164, cat: 'cloud', book: 2023 },
+  { title: "Kubernetes Tools Ecosystem", page: 193, cat: 'cloud', book: 2023 },
+  { title: "Cloud Native Landscape", page: 195, cat: 'cloud', book: 2023 },
+  { title: "What is k8s (Kubernetes)?", page: 207, cat: 'cloud', book: 2023 },
+  { title: "IaaS, PaaS, Cloud Native… How do we get here?", page: 214, cat: 'cloud', book: 2023 },
+  { title: "Top Hidden Costs of Cloud Providers", page: 217, cat: 'cloud', book: 2023 },
+  { title: "Cloud Native Anti Patterns", page: 240, cat: 'cloud', book: 2023 },
+  { title: "How do we transform a system to be Cloud Native?", page: 201, cat: 'cloud', book: 2023 },
+  { title: "Kubernetes Periodic Table", page: 286, cat: 'cloud', book: 2023 },
+  { title: "Why did Amazon Prime Video move from serverless to monolithic?", page: 302, cat: 'cloud', book: 2023 },
+  { title: "IBM MQ → RabbitMQ → Kafka → Pulsar: How do message queues evolve?", page: 137, cat: 'msg', book: 2023 },
+  { title: "How many message queues do you know?", page: 189, cat: 'msg', book: 2023 },
+  { title: "Why is Kafka fast?", page: 190, cat: 'msg', book: 2023 },
+  { title: "How Slack decides to send a notification", page: 192, cat: 'msg', book: 2023 },
+  { title: "What is Event Sourcing? How is it different from normal CRUD?", page: 205, cat: 'msg', book: 2023 },
+  { title: "What is a webhook?", page: 272, cat: 'msg', book: 2023 },
+  { title: "Why do we need message brokers?", page: 323, cat: 'msg', book: 2023 },
+  { title: "What is the journey of a Slack message?", page: 303, cat: 'msg', book: 2023 },
+  { title: "McDonald's event-driven architecture", page: 308, cat: 'msg', book: 2023 },
+  { title: "Batch vs. Stream Processing — what are the differences?", page: 318, cat: 'msg', book: 2023 },
+  { title: "Top 5 Software Architectural Patterns", page: 67, cat: 'arch', book: 2023 },
+  { title: "System Design Blueprint: The Ultimate Guide", page: 61, cat: 'arch', book: 2023 },
+  { title: "18 Key Design Patterns Every Developer Should Know", page: 105, cat: 'arch', book: 2023 },
+  { title: "MVC, MVP, MVVM, MVVM-C, and VIPER — what are the differences?", page: 111, cat: 'arch', book: 2023 },
+  { title: "What does a typical microservice architecture look like?", page: 181, cat: 'arch', book: 2023 },
+  { title: "9 best practices for developing microservices", page: 83, cat: 'arch', book: 2023 },
+  { title: "Top 7 Most-Used Distributed System Patterns", page: 291, cat: 'arch', book: 2023 },
+  { title: "Top 10 Architecture Characteristics / Non-Functional Requirements", page: 320, cat: 'arch', book: 2023 },
+  { title: "How will you design the Stack Overflow website?", page: 145, cat: 'arch', book: 2023 },
+  { title: "Stack Overflow's Architecture: A Very Interesting Case Study", page: 276, cat: 'arch', book: 2023 },
+  { title: "CAP, BASE, SOLID, KISS — what do these acronyms mean?", page: 38, cat: 'arch', book: 2023 },
+  { title: "Differences in Event Sourcing System Design", page: 249, cat: 'arch', book: 2023 },
+  { title: "CI/CD Pipeline Explained in Simple Terms", page: 78, cat: 'devops', book: 2023 },
+  { title: "Netflix Tech Stack - Part 1 (CI/CD Pipeline)", page: 103, cat: 'devops', book: 2023 },
+  { title: "How do companies ship code to production?", page: 55, cat: 'devops', book: 2023 },
+  { title: "How do DevOps, NoOps change the SDLC?", page: 127, cat: 'devops', book: 2023 },
+  { title: "Best ways to test system functionality", page: 51, cat: 'devops', book: 2023 },
+  { title: "DevOps vs. SRE vs. Platform Engineering — do you know the differences?", page: 261, cat: 'devops', book: 2023 },
+  { title: "What tools does your team use to ship code to production?", page: 274, cat: 'devops', book: 2023 },
+  { title: "What branching strategies does your team use?", page: 90, cat: 'devops', book: 2023 },
+  { title: "The Code Review Pyramid", page: 82, cat: 'devops', book: 2023 },
+  { title: "Uber Tech Stack — CI/CD", page: 242, cat: 'devops', book: 2023 },
+  { title: "Paradigm Shift: How Developer to Tester Ratio Changed From 1:1 to 100:1", page: 253, cat: 'devops', book: 2023 },
+  { title: "Linux Boot Process Illustrated", page: 18, cat: 'linux', book: 2023 },
+  { title: "Linux boot Process Explained", page: 32, cat: 'linux', book: 2023 },
+  { title: "Linux file system explained", page: 90, cat: 'linux', book: 2023 },
+  { title: "18 Most-used Linux Commands You Should Know", page: 99, cat: 'linux', book: 2023 },
+  { title: "Most Used Linux Commands Map", page: 204, cat: 'linux', book: 2023 },
+  { title: "Linux commands illustrated on one page!", page: 232, cat: 'linux', book: 2023 },
+  { title: "5 important components of Linux", page: 263, cat: 'linux', book: 2023 },
+  { title: "How to diagnose a process taking too much CPU/memory/IO?", page: 246, cat: 'linux', book: 2023 },
+  { title: "Linux file permission illustrated", page: 281, cat: 'linux', book: 2023 },
+  { title: "What is the difference between Process and Thread?", page: 129, cat: 'linux', book: 2023 },
+  { title: "5 ways of Inter-Process Communication", page: 270, cat: 'linux', book: 2023 },
+  { title: "What are the data structures used in daily life?", page: 95, cat: 'dsa', book: 2023 },
+  { title: "10 Key Data Structures We Use Every Day", page: 179, cat: 'dsa', book: 2023 },
+  { title: "Algorithms You Should Know Before System Design Interviews", page: 219, cat: 'dsa', book: 2023 },
+  { title: "Algorithms You Should Know — updated list", page: 235, cat: 'dsa', book: 2023 },
+  { title: "The 10 Algorithms That Dominate Our World", page: 296, cat: 'dsa', book: 2023 },
+  { title: "8 Key OOP Concepts Every Developer Should Know", page: 257, cat: 'dsa', book: 2023 },
+  { title: "Explaining 5 unique ID generators in distributed systems", page: 141, cat: 'dsa', book: 2023 },
+  { title: "Top 5 Caching Strategies", page: 187, cat: 'cache', book: 2023 },
+  { title: "A simple visual guide to caching systems", page: 198, cat: 'cache', book: 2023 },
+  { title: "Where do we cache data?", page: 289, cat: 'cache', book: 2023 },
+  { title: "Netflix's Tech Stack", page: 22, cat: 'cases', book: 2023 },
+  { title: "Uber Tech Stack", page: 185, cat: 'cases', book: 2023 },
+  { title: "Evolution of the Netflix API Architecture", page: 287, cat: 'cases', book: 2023 },
+  { title: "How does Twitter recommend the 'For You' Timeline?", page: 325, cat: 'cases', book: 2023 },
+  { title: "Twitter 1.0 Tech Stack", page: 279, cat: 'cases', book: 2023 },
+  { title: "How does Chrome work?", page: 247, cat: 'cases', book: 2023 },
+  { title: "Levels.fyi scaled to millions using Google Sheets as a backend!", page: 115, cat: 'cases', book: 2023 },
+  { title: "Discover Amazon's innovative build system — Brazil", page: 329, cat: 'cases', book: 2023 },
+  { title: "YouTube handles 500+ hours of video per minute — how?", page: 332, cat: 'cases', book: 2023 },
+  { title: "Possible Experiment Platform Architecture", page: 331, cat: 'cases', book: 2023 },
+  { title: "How does VISA work when we swipe a credit card?", page: 196, cat: 'pay', book: 2023 },
+  { title: "The Payments Ecosystem", page: 233, cat: 'pay', book: 2023 },
+  { title: "10 principles for building resilient payment systems (by Shopify)", page: 284, cat: 'pay', book: 2023 },
+  { title: "What is FedNow (instant payment)?", page: 267, cat: 'pay', book: 2023 },
+  { title: "What is the difference between 'pull' and 'push' payments?", page: 298, cat: 'pay', book: 2023 },
+  { title: "How does ChatGPT work?", page: 215, cat: 'ai', book: 2023 },
+  { title: "How does ChatGPT work technically?", page: 310, cat: 'ai', book: 2023 },
+  { title: "What's New in GPT-4", page: 314, cat: 'ai', book: 2023 },
+  { title: "ChatGPT — Timeline", page: 300, cat: 'ai', book: 2023 },
+  { title: "Almost every engineer used Git before, but only a few know how it works", page: 113, cat: 'git', book: 2023 },
+  { title: "How Git Commands Work", page: 158, cat: 'git', book: 2023 },
+  { title: "Git Merge vs. Rebase vs. Squash Commit", page: 174, cat: 'git', book: 2023 },
+  { title: "Git Vs Github", page: 153, cat: 'git', book: 2023 },
+  { title: "How does Git Work?", page: 209, cat: 'git', book: 2023 },
+  { title: "How Do C++, Java, Python Work?", page: 42, cat: 'prog', book: 2023 },
+  { title: "What are the greenest programming languages?", page: 85, cat: 'prog', book: 2023 },
+  { title: "Writing Code that Runs on All Platforms", page: 168, cat: 'prog', book: 2023 },
+  { title: "Are you familiar with the Java Collection Framework?", page: 277, cat: 'prog', book: 2023 },
+  { title: "Types of Software Engineers and Their Required Skills", page: 226, cat: 'prog', book: 2023 },
+  { title: "How do you become a full-stack developer?", page: 312, cat: 'prog', book: 2023 },
+  { title: "Backend Burger", page: 315, cat: 'prog', book: 2023 },
+  { title: "Data Pipelines Overview", page: 36, cat: 'prog', book: 2023 },
+  { title: "Logging, tracing and metrics: 3 pillars of system observability", page: 119, cat: 'devops', book: 2023 },
+  { title: "Which latency numbers should you know?", page: 154, cat: 'arch', book: 2023 },
+  { title: "What tech stack is commonly used for microservices?", page: 199, cat: 'arch', book: 2023 },
+  { title: "How Discord Stores Trillions Of Messages", page: 244, cat: 'cases', book: 2023 },
+  { title: "How does HTTPS work?", page: 6, cat: 'sec', book: 2024 },
+  { title: "How does SSH work?", page: 10, cat: 'sec', book: 2024 },
+  { title: "How do we store passwords securely in a database?", page: 12, cat: 'db', book: 2024 },
+  { title: "How does a Password Manager work?", page: 14, cat: 'sec', book: 2024 },
+  { title: "How does Google Authenticator (2FA) work?", page: 16, cat: 'sec', book: 2024 },
+  { title: "Session, Cookie, JWT, Token, SSO, and OAuth 2.0", page: 18, cat: 'sec', book: 2024 },
+  { title: "What are the differences between Cookies and Sessions?", page: 20, cat: 'sec', book: 2024 },
+  { title: "OAuth 2.0 Explained in Simple Terms", page: 22, cat: 'sec', book: 2024 },
+  { title: "Top 4 Security Vulnerabilities Every Developer Must Know (OWASP Top 10)", page: 26, cat: 'sec', book: 2024 },
+  { title: "API Security Checklist", page: 28, cat: 'sec', book: 2024 },
+  { title: "What is a Firewall?", page: 32, cat: 'sec', book: 2024 },
+  { title: "Symmetric vs Asymmetric Encryption", page: 34, cat: 'sec', book: 2024 },
+  { title: "How does Claude 3 / LLM Architecture work?", page: 38, cat: 'ai', book: 2024 },
+  { title: "How does ChatGPT work under the hood?", page: 40, cat: 'ai', book: 2024 },
+  { title: "Introduction to Prompt Engineering", page: 44, cat: 'ai', book: 2024 },
+  { title: "How does vector databases power AI?", page: 46, cat: 'db', book: 2024 },
+  { title: "What is a Webhook?", page: 50, cat: 'api', book: 2024 },
+  { title: "How does REST API work?", page: 52, cat: 'api', book: 2024 },
+  { title: "How does GraphQL work?", page: 54, cat: 'api', book: 2024 },
+  { title: "How does gRPC work?", page: 56, cat: 'api', book: 2024 },
+  { title: "SOAP vs REST vs GraphQL vs RPC", page: 58, cat: 'api', book: 2024 },
+  { title: "How many API architecture styles do you know?", page: 60, cat: 'api', book: 2024 },
+  { title: "How do we design effective and safe APIs?", page: 64, cat: 'api', book: 2024 },
+  { title: "Top 5 common ways to improve API performance", page: 66, cat: 'api', book: 2024 },
+  { title: "HTTP Status Codes Cheat Sheet", page: 68, cat: 'api', book: 2024 },
+  { title: "Important Things About HTTP Headers", page: 70, cat: 'api', book: 2024 },
+  { title: "How to choose between RPC and RESTful?", page: 72, cat: 'api', book: 2024 },
+  { title: "Understanding Database Types (SQL vs NoSQL vs Graph...)", page: 76, cat: 'db', book: 2024 },
+  { title: "Choosing the right database for your system", page: 78, cat: 'db', book: 2024 },
+  { title: "Why is PostgreSQL the most loved database?", page: 80, cat: 'db', book: 2024 },
+  { title: "What are the differences between Data Warehouse and Data Lake?", page: 82, cat: 'db', book: 2024 },
+  { title: "Are Serverless Databases the future?", page: 84, cat: 'db', book: 2024 },
+  { title: "Which SQL statements are most commonly used?", page: 86, cat: 'db', book: 2024 },
+  { title: "How does Redis persist data?", page: 88, cat: 'db', book: 2024 },
+  { title: "How does eSIM work?", page: 94, cat: 'net', book: 2024 },
+  { title: "How is data transmitted between applications?", page: 96, cat: 'net', book: 2024 },
+  { title: "How to scale a website to support millions of users?", page: 98, cat: 'net', book: 2024 },
+  { title: "Top 6 most commonly used Server Types", page: 102, cat: 'net', book: 2024 },
+  { title: "Top 6 Load Balancing Algorithms", page: 104, cat: 'net', book: 2024 },
+  { title: "Proxy Vs Reverse Proxy", page: 106, cat: 'net', book: 2024 }
 ];
 
-// Nettoyage des doublons stricts (titre, année, page)
+// Déduplication
 const seen = new Set();
 const articles = ARTICLES.filter(a => {
-  const key = (a.title.toLowerCase() + '-' + a.book + '-' + a.page).trim();
+  const key = a.title.toLowerCase() + a.book + a.page;
   if (seen.has(key)) return false;
   seen.add(key);
   return true;
 });
 
-let currentView = 'home';
-let currentCat = null;
+// ---- Variables globales pour PDF.js ----
+let currentPdfDoc = null;
+let currentPdfPage = 1;
+let pdfCanvas = null;
+let pdfContext = null;
 
 function init() {
   document.getElementById('totalArticles').textContent = articles.length;
   document.getElementById('allCount').textContent = `(${articles.length})`;
+  pdfCanvas = document.getElementById('pdfCanvas');
+  pdfContext = pdfCanvas.getContext('2d');
   buildHomeView();
   showHome();
 }
@@ -776,7 +777,6 @@ function renderArticles(items, gridId, color) {
     return;
   }
 
-  // Tri par édition puis par ordre chronologique des pages
   const sorted = [...items].sort((a, b) => a.book - b.book || a.page - b.page);
   
   sorted.forEach(article => {
@@ -790,39 +790,127 @@ function renderArticles(items, gridId, color) {
       <div class="article-content">
         <div class="article-title">${article.title}</div>
         <div class="badges-container">
-          <span class="book-badge ${article.book === 2023 ? 'b2023' : 'b2024'}">Édition ${article.book}</span>
+          <span class="book-badge ${article.book === 2023 ? 'b2023' : 'b2024'}">Livre ${article.book}</span>
         </div>
       </div>
       <div class="page-badge" style="background: ${c}">p.${article.page}</div>
     `;
     
-    card.addEventListener('click', () => openPDF(article.book, article.page));
+    card.addEventListener('click', () => openPdfAtPage(article.book, article.page));
     grid.appendChild(card);
   });
 }
 
-function openPDF(bookYear, page) {
-  const link2023 = "https://www.dropbox.com/scl/fi/bs7nxs2abxe5po90g6gyn/livre_2023.pdf.pdf?rlkey=qd00ije7ijhg78c7lrt90mhcc&st=oi0jf7cw&raw=1";
-  const link2024 = "https://www.dropbox.com/scl/fi/yzuxtdpifyynyu4y5nto1/livre_2024.pdf.pdf?rlkey=tdhrvonhm6qjass70yond2ksz&st=4cw3lh0o&raw=1";
+// ---- Nouvelle fonction pour ouvrir le PDF à la bonne page via PDF.js ----
+async function openPdfAtPage(bookYear, page) {
+  const filename = bookYear === 2023 ? 'livre_2023.pdf' : 'livre_2024.pdf';
+  const url = filename; // même dossier
 
-  const targetUrl = bookYear === 2023 ? link2023 : link2024;
-  
-  // Copie automatique du numéro de page pour te faciliter la saisie
-  navigator.clipboard.writeText(page).then(() => {
-    const msg = document.getElementById('copiedMsg');
-    msg.textContent = `📋 Page ${page} copiée ! Colle-la dans le lecteur PDF.`;
+  // Afficher la modale
+  const modal = document.getElementById('pdfModal');
+  modal.classList.add('active');
+
+  // Message de chargement
+  const msg = document.getElementById('copiedMsg');
+  msg.textContent = `⚡ Chargement de ${filename} (Page ${page})...`;
+  msg.classList.add('show');
+  setTimeout(() => msg.classList.remove('show'), 1500);
+
+  try {
+    // Configuration du worker PDF.js (CDN)
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    
+    // Charger le document
+    const loadingTask = pdfjsLib.getDocument(url);
+    currentPdfDoc = await loadingTask.promise;
+    
+    // Aller à la page demandée (les pages commencent à 1 dans PDF.js)
+    const pageNum = Math.min(page, currentPdfDoc.numPages);
+    await renderPdfPage(pageNum);
+    
+    // Mettre à jour l'info
+    document.getElementById('pdfPageInfo').textContent = `Page ${pageNum} / ${currentPdfDoc.numPages}`;
+    currentPdfPage = pageNum;
+    
+    msg.textContent = `✅ Affichage de la page ${pageNum}`;
     msg.classList.add('show');
-    setTimeout(() => msg.classList.remove('show'), 2500);
-  });
-  
-  window.open(targetUrl, '_blank');
+    setTimeout(() => msg.classList.remove('show'), 1500);
+    
+  } catch (error) {
+    console.error('Erreur PDF:', error);
+    alert('Impossible de charger le PDF. Vérifiez que les fichiers livre_2023.pdf et livre_2024.pdf sont bien présents.');
+    closePdf();
+  }
 }
+
+async function renderPdfPage(pageNum) {
+  if (!currentPdfDoc) return;
+  const page = await currentPdfDoc.getPage(pageNum);
+  
+  // Ajuster l'échelle pour remplir le canvas
+  const container = pdfCanvas.parentElement;
+  const containerWidth = container.clientWidth;
+  const containerHeight = container.clientHeight - 60; // hauteur toolbar approx
+  
+  const viewport = page.getViewport({ scale: 1 });
+  const scale = Math.min(containerWidth / viewport.width, containerHeight / viewport.height);
+  const scaledViewport = page.getViewport({ scale });
+  
+  pdfCanvas.width = scaledViewport.width;
+  pdfCanvas.height = scaledViewport.height;
+  
+  const renderContext = {
+    canvasContext: pdfContext,
+    viewport: scaledViewport,
+  };
+  
+  await page.render(renderContext).promise;
+}
+
+function closePdf() {
+  const modal = document.getElementById('pdfModal');
+  modal.classList.remove('active');
+  // Nettoyer
+  if (currentPdfDoc) {
+    currentPdfDoc.destroy();
+    currentPdfDoc = null;
+  }
+  pdfCanvas.width = 0;
+  pdfCanvas.height = 0;
+}
+
+// Permet de fermer la modale en cliquant en dehors
+document.getElementById('pdfModal').addEventListener('click', function(e) {
+  if (e.target === this) closePdf();
+});
+
+// Navigation clavier (optionnel)
+document.addEventListener('keydown', function(e) {
+  if (!document.getElementById('pdfModal').classList.contains('active')) return;
+  if (e.key === 'Escape') closePdf();
+  if (e.key === 'ArrowRight' && currentPdfDoc && currentPdfPage < currentPdfDoc.numPages) {
+    currentPdfPage++;
+    renderPdfPage(currentPdfPage);
+    document.getElementById('pdfPageInfo').textContent = `Page ${currentPdfPage} / ${currentPdfDoc.numPages}`;
+  } else if (e.key === 'ArrowLeft' && currentPdfDoc && currentPdfPage > 1) {
+    currentPdfPage--;
+    renderPdfPage(currentPdfPage);
+    document.getElementById('pdfPageInfo').textContent = `Page ${currentPdfPage} / ${currentPdfDoc.numPages}`;
+  }
+});
+
+// Gestion du redimensionnement
+window.addEventListener('resize', () => {
+  if (currentPdfDoc && document.getElementById('pdfModal').classList.contains('active')) {
+    renderPdfPage(currentPdfPage);
+  }
+});
 
 function setActiveTab(id) {
   document.querySelectorAll('.tab').forEach(t => {
-    if (t.dataset.view === id) {
+    if (t.dataset.view === id || (id === 'home' && t.dataset.view === 'home') || (id === 'all' && t.dataset.view === 'all')) {
       t.classList.add('active');
-      t.style.background = '#e8eaf0'; 
+      t.style.background = '#e8eaf0';
       t.style.color = '#0d0f14';
     } else {
       t.classList.remove('active');
@@ -832,6 +920,7 @@ function setActiveTab(id) {
   });
 }
 
+// Recherche
 document.getElementById('searchInput').addEventListener('input', function() {
   const q = this.value.trim().toLowerCase();
   if (!q) {
