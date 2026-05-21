@@ -802,23 +802,18 @@ function renderArticles(items, gridId, color) {
 }
 
 function openPDF(bookYear, page) {
-  // Vos deux liens Dropbox d'origine
-  const link2023 = "https://www.dropbox.com/scl/fi/bs7nxs2abxe5po90g6gyn/livre_2023.pdf.pdf?rlkey=qd00ije7ijhg78c7lrt90mhcc&st=oi0jf7cw&dl=0";
-  const link2024 = "https://www.dropbox.com/scl/fi/yzuxtdpifyynyu4y5nto1/livre_2024.pdf.pdf?rlkey=tdhrvonhm6qjass70yond2ksz&st=4cw3lh0o&dl=0";
+  const link2023 = "https://www.dropbox.com/scl/fi/bs7nxs2abxe5po90g6gyn/livre_2023.pdf.pdf?rlkey=qd00ije7ijhg78c7lrt90mhcc&st=oi0jf7cw&raw=1";
+  const link2024 = "https://www.dropbox.com/scl/fi/yzuxtdpifyynyu4y5nto1/livre_2024.pdf.pdf?rlkey=tdhrvonhm6qjass70yond2ksz&st=4cw3lh0o&raw=1";
 
-  // On sélectionne le bon lien
-  let baseDropboxUrl = bookYear === 2023 ? link2023 : link2024;
+  const targetUrl = bookYear === 2023 ? link2023 : link2024;
   
-  // ASTUCE : On remplace "dl=0" par "raw=1" pour forcer l'affichage direct dans le navigateur
-  baseDropboxUrl = baseDropboxUrl.replace("dl=0", "raw=1");
-  
-  // Ajout du paramètre de page à la fin
-  const targetUrl = `${baseDropboxUrl}#page=${page}`;
-  
-  const msg = document.getElementById('copiedMsg');
-  msg.textContent = `🚀 Ouverture de l'édition ${bookYear} à la page ${page}...`;
-  msg.classList.add('show');
-  setTimeout(() => msg.classList.remove('show'), 2000);
+  // Copie automatique du numéro de page pour te faciliter la saisie
+  navigator.clipboard.writeText(page).then(() => {
+    const msg = document.getElementById('copiedMsg');
+    msg.textContent = `📋 Page ${page} copiée ! Colle-la dans le lecteur PDF.`;
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 2500);
+  });
   
   window.open(targetUrl, '_blank');
 }
