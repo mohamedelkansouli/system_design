@@ -5,10 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ByteByteGo — Archive System Design (2023 - 2024)</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-<!-- Librairie PDF.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-  /* --- Mêmes styles que votre code original --- */
   :root {
     --bg: #0d0f14;
     --surface: #161920;
@@ -17,6 +14,7 @@
     --text: #e8eaf0;
     --muted: #6b7280;
     --accent: #f0f4ff;
+
     --api:     #3b82f6;
     --db:      #10b981;
     --net:     #06b6d4;
@@ -296,70 +294,6 @@
   .results-label { font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--muted); padding: 0.5rem 0 1rem; }
   .empty { text-align: center; padding: 4rem 2rem; color: var(--muted); font-size: 0.85rem; }
 
-  /* --- MODALE PDF --- */
-  .pdf-modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0; top: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.85);
-    justify-content: center;
-    align-items: center;
-  }
-  .pdf-modal.active {
-    display: flex;
-  }
-  .pdf-container {
-    background: var(--surface2);
-    border-radius: 16px;
-    width: 90%;
-    max-width: 900px;
-    height: 85vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: relative;
-  }
-  .pdf-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.8rem 1.2rem;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-  }
-  .pdf-toolbar span {
-    font-family: 'Space Mono', monospace;
-    color: var(--muted);
-    font-size: 0.8rem;
-  }
-  .close-pdf {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-size: 1.5rem;
-    cursor: pointer;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    transition: all 0.2s;
-  }
-  .close-pdf:hover {
-    background: #ef4444;
-    border-color: #ef4444;
-    color: white;
-  }
-  #pdfCanvas {
-    width: 100%;
-    flex: 1;
-    object-fit: contain;
-    background: #525659; /* fond gris comme Adobe Reader */
-  }
-
   .copied {
     position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
     background: var(--text); color: var(--bg); padding: 0.5rem 1rem; border-radius: 6px;
@@ -403,22 +337,22 @@
 <div class="tabs" id="tabs">
   <div class="tab active" data-view="home" onclick="showHome()">🏠 Accueil</div>
   <div class="tab" data-view="all" onclick="showAll()">📋 Tous <span class="count" id="allCount"></span></div>
-  <div class="tab" onclick="showCategory('api')">🔌 API</div>
-  <div class="tab" onclick="showCategory('db')">🗄️ Bases de données</div>
-  <div class="tab" onclick="showCategory('net')">🌐 Réseau</div>
-  <div class="tab" onclick="showCategory('sec')">🔐 Sécurité</div>
-  <div class="tab" onclick="showCategory('cloud')">☁️ Cloud</div>
-  <div class="tab" onclick="showCategory('msg')">📨 Messaging</div>
-  <div class="tab" onclick="showCategory('arch')">🏗️ Architecture</div>
-  <div class="tab" onclick="showCategory('devops')">⚙️ DevOps</div>
-  <div class="tab" onclick="showCategory('linux')">🐧 Linux</div>
-  <div class="tab" onclick="showCategory('dsa')">📊 Algo & Structs</div>
-  <div class="tab" onclick="showCategory('cache')">💾 Cache</div>
-  <div class="tab" onclick="showCategory('cases')">🏢 Case Studies</div>
-  <div class="tab" onclick="showCategory('pay')">💳 Paiements</div>
-  <div class="tab" onclick="showCategory('ai')">🤖 AI & LLMs</div>
-  <div class="tab" onclick="showCategory('git')">🔀 Git</div>
-  <div class="tab" onclick="showCategory('prog')">💻 Programmation</div>
+  <div class="tab" onclick="showCategory('api')" style="--c: var(--api)">🔌 API</div>
+  <div class="tab" onclick="showCategory('db')" style="--c: var(--db)">🗄️ Bases de données</div>
+  <div class="tab" onclick="showCategory('net')" style="--c: var(--net)">🌐 Réseau</div>
+  <div class="tab" onclick="showCategory('sec')" style="--c: var(--sec)">🔐 Sécurité</div>
+  <div class="tab" onclick="showCategory('cloud')" style="--c: var(--cloud)">☁️ Cloud</div>
+  <div class="tab" onclick="showCategory('msg')" style="--c: var(--msg)">📨 Messaging</div>
+  <div class="tab" onclick="showCategory('arch')" style="--c: var(--arch)">🏗️ Architecture</div>
+  <div class="tab" onclick="showCategory('devops')" style="--c: var(--devops)">⚙️ DevOps</div>
+  <div class="tab" onclick="showCategory('linux')" style="--c: var(--linux)">🐧 Linux</div>
+  <div class="tab" onclick="showCategory('dsa')" style="--c: var(--dsa)">📊 Algo & Structs</div>
+  <div class="tab" onclick="showCategory('cache')" style="--c: var(--cache)">💾 Cache</div>
+  <div class="tab" onclick="showCategory('cases')" style="--c: var(--cases)">🏢 Case Studies</div>
+  <div class="tab" onclick="showCategory('pay')" style="--c: var(--pay)">💳 Paiements</div>
+  <div class="tab" onclick="showCategory('ai')" style="--c: var(--ai)">🤖 AI & LLMs</div>
+  <div class="tab" onclick="showCategory('git')" style="--c: var(--git)">🔀 Git</div>
+  <div class="tab" onclick="showCategory('prog')" style="--c: var(--prog)">💻 Programmation</div>
 </div>
 
 <div class="category-grid" id="homeView"></div>
@@ -447,21 +381,9 @@
   <div class="articles-grid" id="searchGrid"></div>
 </div>
 
-<!-- Modale PDF -->
-<div class="pdf-modal" id="pdfModal">
-  <div class="pdf-container">
-    <div class="pdf-toolbar">
-      <span id="pdfPageInfo">Page 1</span>
-      <button class="close-pdf" onclick="closePdf()">&times;</button>
-    </div>
-    <canvas id="pdfCanvas"></canvas>
-  </div>
-</div>
-
-<div class="copied" id="copiedMsg">Chargement du PDF...</div>
+<div class="copied" id="copiedMsg">Ouverture du PDF...</div>
 
 <script>
-// ---- Configuration des catégories (inchangée) ----
 const CATEGORIES = {
   api:   { label: 'API & Protocoles',       icon: '🔌', color: '#3b82f6' },
   db:    { label: 'Bases de données',        icon: '🗄️', color: '#10b981' },
@@ -481,8 +403,8 @@ const CATEGORIES = {
   prog:  { label: 'Prog & Langages',          icon: '💻', color: '#60a5fa' },
 };
 
-// ---- Articles (inchangé) ----
 const ARTICLES = [
+  // --- LIVRE 1 (2023 EDITION) ---
   { title: "Explaining 9 types of API testing", page: 7, cat: 'api', book: 2023 },
   { title: "How is data sent over the internet? OSI model, TCP/IP?", page: 10, cat: 'net', book: 2023 },
   { title: "Top 5 common ways to improve API performance", page: 11, cat: 'api', book: 2023 },
@@ -643,6 +565,8 @@ const ARTICLES = [
   { title: "Which latency numbers should you know?", page: 154, cat: 'arch', book: 2023 },
   { title: "What tech stack is commonly used for microservices?", page: 199, cat: 'arch', book: 2023 },
   { title: "How Discord Stores Trillions Of Messages", page: 244, cat: 'cases', book: 2023 },
+
+  // --- LIVRE 2 (2024 EDITION) ---
   { title: "How does HTTPS work?", page: 6, cat: 'sec', book: 2024 },
   { title: "How does SSH work?", page: 10, cat: 'sec', book: 2024 },
   { title: "How do we store passwords securely in a database?", page: 12, cat: 'db', book: 2024 },
@@ -694,17 +618,18 @@ const articles = ARTICLES.filter(a => {
   return true;
 });
 
-// ---- Variables globales pour PDF.js ----
-let currentPdfDoc = null;
-let currentPdfPage = 1;
-let pdfCanvas = null;
-let pdfContext = null;
+// URLs Google Drive (liens directs)
+const PDF_URLS = {
+  2023: 'https://drive.google.com/uc?export=download&id=12Oi1SGe6raiLnN1gk-X8Q9WpKhhSHo14',
+  2024: 'https://drive.google.com/uc?export=download&id=1RQaeJtpv8Z682j--Nu6eP7_rfitkPh71'
+};
+
+let currentView = 'home';
+let currentCat = null;
 
 function init() {
   document.getElementById('totalArticles').textContent = articles.length;
   document.getElementById('allCount').textContent = `(${articles.length})`;
-  pdfCanvas = document.getElementById('pdfCanvas');
-  pdfContext = pdfCanvas.getContext('2d');
   buildHomeView();
   showHome();
 }
@@ -796,89 +721,81 @@ function renderArticles(items, gridId, color) {
       <div class="page-badge" style="background: ${c}">p.${article.page}</div>
     `;
     
-    card.addEventListener('click', () => openPdfAtPage(article.book, article.page));
+    card.addEventListener('click', () => openPDF(article.book, article.page));
     grid.appendChild(card);
   });
 }
 
-// ---- Nouvelle fonction pour ouvrir le PDF à la bonne page via PDF.js ----
 function openPDF(bookYear, page) {
-  // Tes URLs Dropbox (garde celles que tu avais déjà)
-  const url = bookYear === 2023 
-    ? 'https://dl.dropboxusercontent.com/s/xxx/livre_2023.pdf'
-    : 'https://dl.dropboxusercontent.com/s/yyy/livre_2024.pdf';
-
-  // Ouvre dans un nouvel onglet ET passe la page en paramètre d'URL
-  const viewerUrl = 'pdf-viewer.html?file=' + encodeURIComponent(url) + '&page=' + page;
-  window.open(viewerUrl, '_blank');
-}
-
-async function renderPdfPage(pageNum) {
-  if (!currentPdfDoc) return;
-  const page = await currentPdfDoc.getPage(pageNum);
+  const url = PDF_URLS[bookYear];
+  const title = `ByteByteGo - ${bookYear === 2023 ? '2023' : '2024'} — Page ${page}`;
   
-  // Ajuster l'échelle pour remplir le canvas
-  const container = pdfCanvas.parentElement;
-  const containerWidth = container.clientWidth;
-  const containerHeight = container.clientHeight - 60; // hauteur toolbar approx
-  
-  const viewport = page.getViewport({ scale: 1 });
-  const scale = Math.min(containerWidth / viewport.width, containerHeight / viewport.height);
-  const scaledViewport = page.getViewport({ scale });
-  
-  pdfCanvas.width = scaledViewport.width;
-  pdfCanvas.height = scaledViewport.height;
-  
-  const renderContext = {
-    canvasContext: pdfContext,
-    viewport: scaledViewport,
-  };
-  
-  await page.render(renderContext).promise;
-}
-
-function closePdf() {
-  const modal = document.getElementById('pdfModal');
-  modal.classList.remove('active');
-  // Nettoyer
-  if (currentPdfDoc) {
-    currentPdfDoc.destroy();
-    currentPdfDoc = null;
+  const popup = window.open('', '_blank', 'width=950,height=750');
+  if (!popup) {
+    alert("⚠️ Popup bloqué. Veuillez autoriser les popups pour ce site.");
+    return;
   }
-  pdfCanvas.width = 0;
-  pdfCanvas.height = 0;
+  
+  popup.document.title = title;
+  
+  popup.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>${title}</title>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Segoe UI', sans-serif; }
+        #spinner { color: #fff; font-size: 1.2rem; padding: 2rem; text-align: center; }
+        canvas { box-shadow: 0 4px 20px rgba(0,0,0,0.5); border-radius: 4px; max-width: 95%; }
+        #info { color: #ccc; font-size: 0.85rem; margin-top: 0.8rem; }
+        #error { color: #ef4444; font-size: 1rem; padding: 2rem; text-align: center; display: none; }
+      </style>
+    </head>
+    <body>
+      <div id="spinner">⏳ Chargement du PDF...</div>
+      <div id="error">❌ Erreur de chargement. Vérifiez que le fichier est bien public sur Google Drive.</div>
+      <canvas id="pdfCanvas"></canvas>
+      <div id="info"></div>
+      <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        pdfjsLib.getDocument('${url}').promise.then(async function(pdf) {
+          document.getElementById('spinner').style.display = 'none';
+          
+          var pageNum = Math.min(${page}, pdf.numPages);
+          var page = await pdf.getPage(pageNum);
+          var canvas = document.getElementById('pdfCanvas');
+          var ctx = canvas.getContext('2d');
+          
+          var viewport = page.getViewport({scale: 1});
+          var scale = Math.min((window.innerWidth * 0.9) / viewport.width, (window.innerHeight * 0.85) / viewport.height);
+          var scaledViewport = page.getViewport({scale: scale});
+          
+          canvas.width = scaledViewport.width;
+          canvas.height = scaledViewport.height;
+          
+          await page.render({canvasContext: ctx, viewport: scaledViewport}).promise;
+          
+          document.getElementById('info').textContent = 'Page ' + pageNum + ' / ' + pdf.numPages;
+        }).catch(function(err) {
+          console.error(err);
+          document.getElementById('spinner').style.display = 'none';
+          document.getElementById('error').style.display = 'block';
+        });
+      <\/script>
+    </body>
+    </html>
+  `);
+  
+  popup.document.close();
 }
-
-// Permet de fermer la modale en cliquant en dehors
-document.getElementById('pdfModal').addEventListener('click', function(e) {
-  if (e.target === this) closePdf();
-});
-
-// Navigation clavier (optionnel)
-document.addEventListener('keydown', function(e) {
-  if (!document.getElementById('pdfModal').classList.contains('active')) return;
-  if (e.key === 'Escape') closePdf();
-  if (e.key === 'ArrowRight' && currentPdfDoc && currentPdfPage < currentPdfDoc.numPages) {
-    currentPdfPage++;
-    renderPdfPage(currentPdfPage);
-    document.getElementById('pdfPageInfo').textContent = `Page ${currentPdfPage} / ${currentPdfDoc.numPages}`;
-  } else if (e.key === 'ArrowLeft' && currentPdfDoc && currentPdfPage > 1) {
-    currentPdfPage--;
-    renderPdfPage(currentPdfPage);
-    document.getElementById('pdfPageInfo').textContent = `Page ${currentPdfPage} / ${currentPdfDoc.numPages}`;
-  }
-});
-
-// Gestion du redimensionnement
-window.addEventListener('resize', () => {
-  if (currentPdfDoc && document.getElementById('pdfModal').classList.contains('active')) {
-    renderPdfPage(currentPdfPage);
-  }
-});
 
 function setActiveTab(id) {
   document.querySelectorAll('.tab').forEach(t => {
-    if (t.dataset.view === id || (id === 'home' && t.dataset.view === 'home') || (id === 'all' && t.dataset.view === 'all')) {
+    if (t.dataset.view === id) {
       t.classList.add('active');
       t.style.background = '#e8eaf0';
       t.style.color = '#0d0f14';
@@ -890,7 +807,6 @@ function setActiveTab(id) {
   });
 }
 
-// Recherche
 document.getElementById('searchInput').addEventListener('input', function() {
   const q = this.value.trim().toLowerCase();
   if (!q) {
@@ -912,6 +828,17 @@ document.getElementById('searchInput').addEventListener('input', function() {
   renderArticles(results, 'searchGrid', '#6b7280');
   document.getElementById('searchResults').classList.add('visible');
 });
+
+// Notification visuelle
+const copiedMsg = document.getElementById('copiedMsg');
+
+const originalOpenPDF = openPDF;
+openPDF = function(bookYear, page) {
+  copiedMsg.textContent = `📖 Ouverture du PDF ${bookYear} à la page ${page}...`;
+  copiedMsg.classList.add('show');
+  setTimeout(() => copiedMsg.classList.remove('show'), 2000);
+  originalOpenPDF(bookYear, page);
+};
 
 window.addEventListener('DOMContentLoaded', init);
 </script>
