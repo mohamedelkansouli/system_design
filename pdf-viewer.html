@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    body { margin: 0; background: #333; display: flex; flex-direction: column; height: 100vh; }
+    #controls { background: #222; color: #fff; padding: 8px; text-align: center; font-family: sans-serif; }
+    canvas { flex: 1; }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <span id="info">Chargement...</span>
+  </div>
+  <canvas id="pdfCanvas"></canvas>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const fileUrl = params.get('file');
+    const targetPage = parseInt(params.get('page')) || 1;
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    pdfjsLib.getDocument(fileUrl).promise.then(async (pdf) => {
+      const pageNum = Math.min(targetPage, pdf.numPages);
+      document.getElementById('info').textContent = `Page ${pageNum} / ${pdf.numPages}`;
+      
+      const page = await pdf.getPage(pageNum);
+      const canvas = document.getElementById('pdfCanvas');
+      const ctx = canvas.getContext('2d');
+      
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight - 40;
+      
+      const viewport = page.getViewport({ scale: 1 });
+      const scale = Math.min(canvas.width / viewport.width, canvas.height / viewport.height);
+      const scaledViewport = page.getViewport({ scale });
+      
+      canvas.width = scaledViewport.width;
+      canvas.height = scaledViewport.height;
+      
+      await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
+    }).catch(err => {
+      document.getElementById('info').textContent = 'Erreur de chargement';
+      console.error(err);
+    });
+  </script>
+</body>
+</html>
